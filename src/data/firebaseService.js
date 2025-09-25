@@ -7,8 +7,7 @@ import {
   deleteDoc, 
   doc, 
   updateDoc,
-  query,
-  where
+  getDoc
 } from 'firebase/firestore';
 
 // Clientes

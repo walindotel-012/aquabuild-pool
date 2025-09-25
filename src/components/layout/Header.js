@@ -15,14 +15,19 @@ export class Header {
             <span class="text-2xl">🌊</span>
             <h1 class="text-xl font-bold">AquaBuild</h1>
           </div>
-          <nav>
-            <ul class="flex space-x-6">
-              <li><a href="#" data-tab="dashboard" class="tab-link hover:text-cyan-200 transition-colors">Dashboard</a></li>
-              <li><a href="#" data-tab="clients" class="tab-link hover:text-cyan-200 transition-colors">Clientes</a></li>
-              <li><a href="#" data-tab="quotes" class="tab-link hover:text-cyan-200 transition-colors">Cotizaciones</a></li>
-              <li><a href="#" data-tab="invoices" class="tab-link hover:text-cyan-200 transition-colors">Facturas</a></li>
-            </ul>
-          </nav>
+          <div class="flex items-center space-x-6">
+            <nav>
+              <ul class="flex space-x-6">
+                <li><a href="#" data-tab="dashboard" class="tab-link hover:text-cyan-200 transition-colors">Dashboard</a></li>
+                <li><a href="#" data-tab="clients" class="tab-link hover:text-cyan-200 transition-colors">Clientes</a></li>
+                <li><a href="#" data-tab="quotes" class="tab-link hover:text-cyan-200 transition-colors">Cotizaciones</a></li>
+                <li><a href="#" data-tab="invoices" class="tab-link hover:text-cyan-200 transition-colors">Facturas</a></li>
+              </ul>
+            </nav>
+            <button id="logout-btn" class="btn btn-outline text-white border-white hover:bg-white hover:text-blue-700">
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -35,6 +40,11 @@ export class Header {
         this.setActiveTab(tab);
         this.onNavigate(tab);
       });
+    });
+    
+    header.querySelector('#logout-btn').addEventListener('click', (e) => {
+      e.preventDefault();
+      this.onNavigate('logout');
     });
     
     return header;
