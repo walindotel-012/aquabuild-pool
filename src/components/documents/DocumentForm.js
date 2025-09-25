@@ -1,13 +1,13 @@
-// src/components/documents/DocumentForm.js
 import { Modal } from '../ui/Modal.js';
 import { ClientService } from '../../data/firebaseService.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
+import { formatCurrencyRD } from '../../utils/helpers.js';
 
 export class DocumentForm {
   constructor(type, onSubmit) {
     this.type = type;
     this.onSubmit = onSubmit;
-    this.modal = new Modal();
+    this.modal = null;
   }
   
   async show() {
@@ -27,8 +27,8 @@ export class DocumentForm {
           <div class="space-y-4">
             <label class="block text-sm font-medium text-gray-700">Cliente *</label>
             <div class="flex space-x-3 mb-3">
-              <button type="button" class="btn btn-outline select-existing">Seleccionar Existente</button>
-              <button type="button" class="btn btn-outline create-new">Crear Nuevo</button>
+              <button type="button" id="select-existing-client" class="btn btn-outline">Seleccionar Existente</button>
+              <button type="button" id="create-new-client" class="btn btn-outline">Crear Nuevo</button>
             </div>
             
             <div id="existing-client-section">
@@ -60,62 +60,47 @@ export class DocumentForm {
           <div class="bg-gray-50 p-4 rounded-lg">
             <div class="flex justify-end space-y-2 flex-col">
               <div class="flex justify-between">
-                <span class="font-medium">Subtotal:</span>
-                <span id="subtotal">₡0.00</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="font-medium">IVA (13%):</span>
-                <span id="iva">₡0.00</span>
-              </div>
-              <div class="flex justify-between pt-2 border-t border-gray-200">
-                <span class="font-bold text-lg">Total:</span>
-                <span id="total" class="font-bold text-lg text-blue-600">₡0.00</span>
+                <span class="font-medium">Total:</span>
+                <span id="total" class="font-bold text-lg text-blue-600">RD$0.00</span>
               </div>
             </div>
           </div>
         </form>
       `;
       
-      this.modal.show(title, formHTML, 'Guardar', (modal) => {
-        document.getElementById('document-date').valueAsDate = new Date();
-        
-        const selectExistingBtn = document.querySelector('.select-existing');
-        const createNewBtn = document.querySelector('.create-new');
-        
-        if (selectExistingBtn) {
-          selectExistingBtn.addEventListener('click', () => {
-            document.getElementById('existing-client-section').classList.remove('hidden');
-            document.getElementById('new-client-section').classList.add('hidden');
-          });
-        }
-        
-        if (createNewBtn) {
-          createNewBtn.addEventListener('click', () => {
-            document.getElementById('existing-client-section').classList.add('hidden');
-            document.getElementById('new-client-section').classList.remove('hidden');
-          });
-        }
-        
-        this.addItem();
-        
-        const addItemBtn = document.getElementById('add-item');
-        if (addItemBtn) {
-          addItemBtn.addEventListener('click', () => {
-            this.addItem();
-          });
-        }
-        
-        const form = document.getElementById('document-form');
-        if (form) {
-          form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleSubmit(modal);
-          });
-        }
-      });
+      this.modal = new Modal();
+      this.modal.show(title, formHTML, 'Guardar', null);
+      this.setupFormEvents();
+      
     } catch (error) {
-      console.error('Error al mostrar formulario de documento:', error);
+      console.error('Error al mostrar formulario:', error);
       alert('Error al cargar el formulario: ' + error.message);
+    }
+  }
+  
+  setupFormEvents() {
+    document.getElementById('select-existing-client')?.addEventListener('click', () => {
+      document.getElementById('existing-client-section').classList.remove('hidden');
+      document.getElementById('new-client-section').classList.add('hidden');
+    });
+    
+    document.getElementById('create-new-client')?.addEventListener('click', () => {
+      document.getElementById('existing-client-section').classList.add('hidden');
+      document.getElementById('new-client-section').classList.remove('hidden');
+    });
+    
+    document.getElementById('document-date').valueAsDate = new Date();
+    this.addItem();
+    document.getElementById('add-item')?.addEventListener('click', () => {
+      this.addItem();
+    });
+    
+    const saveButton = this.modal.element.querySelector('.confirm-modal');
+    if (saveButton) {
+      saveButton.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await this.handleSave();
+      });
     }
   }
   
@@ -123,20 +108,18 @@ export class DocumentForm {
     const container = document.getElementById('items-container');
     if (!container) return;
     
-    const itemIndex = container.children.length;
-    
     const itemHTML = `
       <div class="item-row flex space-x-3 p-3 bg-white rounded border">
-        <div class="flex-1">
-          <input type="text" class="form-control item-description" placeholder="Descripción del servicio o producto" required>
-        </div>
-        <div class="w-20">
+        <div class="w-16">
           <input type="number" class="form-control item-quantity" placeholder="1" min="1" value="1" required>
         </div>
-        <div class="w-32">
+        <div class="flex-1">
+          <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" required>
+        </div>
+        <div class="w-24">
           <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01" required>
         </div>
-        <div class="w-32">
+        <div class="w-24">
           <input type="text" class="form-control item-total" readonly>
         </div>
         <button type="button" class="btn btn-danger remove-item self-end">✕</button>
@@ -144,30 +127,26 @@ export class DocumentForm {
     `;
     
     container.insertAdjacentHTML('beforeend', itemHTML);
-    
     const lastItem = container.lastElementChild;
-    this.setupItemListeners(lastItem, itemIndex);
+    this.setupItemListeners(lastItem);
   }
   
-  setupItemListeners(itemElement, index) {
+  setupItemListeners(itemElement) {
     const quantityInput = itemElement.querySelector('.item-quantity');
     const priceInput = itemElement.querySelector('.item-price');
     const totalInput = itemElement.querySelector('.item-total');
     const removeBtn = itemElement.querySelector('.remove-item');
     
-    if (!quantityInput || !priceInput || !totalInput || !removeBtn) return;
-    
     const calculateTotal = () => {
       const quantity = parseFloat(quantityInput.value) || 0;
       const price = parseFloat(priceInput.value) || 0;
       const total = quantity * price;
-      totalInput.value = total > 0 ? `₡${total.toFixed(2)}` : '';
+      totalInput.value = total > 0 ? formatCurrencyRD(total) : '';
       this.calculateTotals();
     };
     
     quantityInput.addEventListener('input', calculateTotal);
     priceInput.addEventListener('input', calculateTotal);
-    
     removeBtn.addEventListener('click', () => {
       if (itemElement.parentNode) {
         itemElement.parentNode.removeChild(itemElement);
@@ -177,48 +156,43 @@ export class DocumentForm {
   }
   
   calculateTotals() {
-    let subtotal = 0;
+    let total = 0;
     const itemRows = document.querySelectorAll('.item-row');
     
     itemRows.forEach(row => {
       const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
       const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-      subtotal += quantity * price;
+      total += quantity * price;
     });
     
-    const iva = subtotal * 0.13;
-    const total = subtotal + iva;
-    
-    const subtotalEl = document.getElementById('subtotal');
-    const ivaEl = document.getElementById('iva');
-    const totalEl = document.getElementById('total');
-    
-    if (subtotalEl) subtotalEl.textContent = `₡${subtotal.toFixed(2)}`;
-    if (ivaEl) ivaEl.textContent = `₡${iva.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `₡${total.toFixed(2)}`;
+    document.getElementById('total').textContent = formatCurrencyRD(total);
   }
   
-  async handleSubmit(modal) {
-    const isExistingClient = document.getElementById('existing-client-section')?.classList.contains('hidden') === false;
-    let clientId, clientName;
+  async handleSave() {
+    const errorDiv = document.getElementById('document-error-message');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+    }
     
     try {
+      const isExistingClient = !document.getElementById('existing-client-section')?.classList.contains('hidden');
+      let clientId, clientName, clientPhone, clientAddress;
+      
       if (isExistingClient) {
         clientId = document.getElementById('existing-client')?.value;
-        if (!clientId) {
-          throw new Error('Por favor seleccione un cliente');
-        }
+        if (!clientId) throw new Error('Por favor seleccione un cliente');
         const client = await ClientService.getById(clientId);
-        if (!client) {
-          throw new Error('Cliente no encontrado');
-        }
+        if (!client) throw new Error('Cliente no encontrado');
         clientName = client.name;
+        clientPhone = client.phone;
+        clientAddress = client.address;
       } else {
         const newClientData = {
-          name: document.getElementById('new-client-name')?.value,
-          email: document.getElementById('new-client-email')?.value,
-          phone: document.getElementById('new-client-phone')?.value,
-          address: document.getElementById('new-client-address')?.value
+          name: document.getElementById('new-client-name')?.value.trim(),
+          email: document.getElementById('new-client-email')?.value.trim(),
+          phone: document.getElementById('new-client-phone')?.value.trim(),
+          address: document.getElementById('new-client-address')?.value.trim()
         };
         
         if (!newClientData.name || !newClientData.phone) {
@@ -228,6 +202,8 @@ export class DocumentForm {
         const newClient = await ClientService.create(newClientData);
         clientId = newClient.id;
         clientName = newClient.name;
+        clientPhone = newClient.phone;
+        clientAddress = newClient.address;
       }
       
       const items = [];
@@ -235,7 +211,7 @@ export class DocumentForm {
       let hasValidItem = false;
       
       itemRows.forEach(row => {
-        const description = row.querySelector('.item-description')?.value;
+        const description = row.querySelector('.item-description')?.value.trim();
         const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
         const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
         
@@ -250,21 +226,17 @@ export class DocumentForm {
         }
       });
       
-      if (!hasValidItem) {
-        throw new Error('Por favor agregue al menos un item válido');
-      }
+      if (!hasValidItem) throw new Error('Por favor agregue al menos un item válido');
       
-      const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-      const iva = subtotal * 0.13;
-      const total = subtotal + iva;
+      const total = items.reduce((sum, item) => sum + item.total, 0);
       
       const documentData = {
         clientId,
         clientName,
+        clientPhone,
+        clientAddress,
         date: document.getElementById('document-date')?.value,
         items,
-        subtotal,
-        iva,
         total
       };
       
@@ -274,11 +246,15 @@ export class DocumentForm {
         await InvoiceService.create(documentData);
       }
       
+      alert(this.type === 'quote' 
+        ? '¡Cotización creada exitosamente!' 
+        : '¡Factura creada exitosamente!');
+      
       this.onSubmit();
-      modal.close();
+      this.modal.close();
+      
     } catch (error) {
       console.error('Error al guardar documento:', error);
-      const errorDiv = document.getElementById('document-error-message');
       if (errorDiv) {
         errorDiv.textContent = error.message;
         errorDiv.classList.remove('hidden');

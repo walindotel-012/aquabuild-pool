@@ -11,7 +11,6 @@ export class InvoicesPage {
     const container = document.createElement('div');
     container.className = 'space-y-6';
     
-    // Header with button
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center';
     header.innerHTML = `
@@ -21,11 +20,9 @@ export class InvoicesPage {
     
     container.appendChild(header);
     
-    // Document list
-    this.documentList = new DocumentList('invoice', () => this.refresh());
-    container.appendChild(this.documentList.render());
+    const documentList = new DocumentList('invoice', () => this.refresh());
+    container.appendChild(documentList.render());
     
-    // Add event listener to new invoice button
     container.querySelector('#new-invoice-btn').addEventListener('click', () => {
       this.documentForm.show();
     });

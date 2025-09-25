@@ -14,11 +14,8 @@ import {
 export const ClientService = {
   async getAll() {
     try {
-      console.log('Obteniendo clientes de Firestore...');
       const querySnapshot = await getDocs(collection(db, 'clients'));
-      const clients = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('Clientes obtenidos:', clients);
-      return clients;
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
       console.error('Error al obtener clientes:', error);
       throw new Error('No se pudieron cargar los clientes');
@@ -29,10 +26,7 @@ export const ClientService = {
     try {
       const docRef = doc(db, 'clients', id);
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() };
-      }
-      return null;
+      return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
     } catch (error) {
       console.error('Error al obtener cliente:', error);
       throw new Error('No se pudo cargar el cliente');
@@ -41,8 +35,6 @@ export const ClientService = {
   
   async create(clientData) {
     try {
-      console.log('Creando cliente:', clientData);
-      
       if (!clientData.name || !clientData.phone) {
         throw new Error('Nombre y teléfono son requeridos');
       }
@@ -52,9 +44,7 @@ export const ClientService = {
         createdAt: new Date().toISOString()
       });
       
-      const newClient = { id: docRef.id, ...clientData };
-      console.log('Cliente creado exitosamente:', newClient);
-      return newClient;
+      return { id: docRef.id, ...clientData };
     } catch (error) {
       console.error('Error al crear cliente:', error);
       throw new Error('Error al crear el cliente: ' + error.message);
@@ -63,16 +53,12 @@ export const ClientService = {
   
   async update(id, clientData) {
     try {
-      console.log('Actualizando cliente:', id, clientData);
-      
       if (!clientData.name || !clientData.phone) {
         throw new Error('Nombre y teléfono son requeridos');
       }
       
       const docRef = doc(db, 'clients', id);
       await updateDoc(docRef, clientData);
-      
-      console.log('Cliente actualizado exitosamente');
       return { id, ...clientData };
     } catch (error) {
       console.error('Error al actualizar cliente:', error);
@@ -82,9 +68,7 @@ export const ClientService = {
   
   async delete(id) {
     try {
-      console.log('Eliminando cliente:', id);
       await deleteDoc(doc(db, 'clients', id));
-      console.log('Cliente eliminado exitosamente');
     } catch (error) {
       console.error('Error al eliminar cliente:', error);
       throw new Error('Error al eliminar el cliente: ' + error.message);
@@ -96,11 +80,8 @@ export const ClientService = {
 export const QuoteService = {
   async getAll() {
     try {
-      console.log('Obteniendo cotizaciones de Firestore...');
       const querySnapshot = await getDocs(collection(db, 'quotes'));
-      const quotes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('Cotizaciones obtenidas:', quotes);
-      return quotes;
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
       console.error('Error al obtener cotizaciones:', error);
       throw new Error('No se pudieron cargar las cotizaciones');
@@ -109,22 +90,30 @@ export const QuoteService = {
   
   async create(quoteData) {
     try {
-      console.log('Creando cotización:', quoteData);
+      if (!quoteData.clientName) {
+        throw new Error('Nombre del cliente es requerido');
+      }
       
-      // Obtener el siguiente número de cotización
+      const subtotal = quoteData.items.reduce((sum, item) => sum + item.total, 0);
       const quotes = await this.getAll();
       const counter = quotes.length + 1;
+      
       const quoteWithNumber = {
-        ...quoteData,
+        clientId: quoteData.clientId || '',
+        clientName: quoteData.clientName,
+        clientPhone: quoteData.clientPhone || '',
+        clientAddress: quoteData.clientAddress || '',
+        date: quoteData.date,
+        items: quoteData.items,
+        subtotal: subtotal,
+        total: subtotal,
         number: `COT-${counter.toString().padStart(4, '0')}`,
         status: 'Pendiente',
         createdAt: new Date().toISOString()
       };
       
       const docRef = await addDoc(collection(db, 'quotes'), quoteWithNumber);
-      const newQuote = { id: docRef.id, ...quoteWithNumber };
-      console.log('Cotización creada exitosamente:', newQuote);
-      return newQuote;
+      return { id: docRef.id, ...quoteWithNumber };
     } catch (error) {
       console.error('Error al crear cotización:', error);
       throw new Error('Error al crear la cotización: ' + error.message);
@@ -133,9 +122,7 @@ export const QuoteService = {
   
   async delete(id) {
     try {
-      console.log('Eliminando cotización:', id);
       await deleteDoc(doc(db, 'quotes', id));
-      console.log('Cotización eliminada exitosamente');
     } catch (error) {
       console.error('Error al eliminar cotización:', error);
       throw new Error('Error al eliminar la cotización: ' + error.message);
@@ -147,11 +134,8 @@ export const QuoteService = {
 export const InvoiceService = {
   async getAll() {
     try {
-      console.log('Obteniendo facturas de Firestore...');
       const querySnapshot = await getDocs(collection(db, 'invoices'));
-      const invoices = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('Facturas obtenidas:', invoices);
-      return invoices;
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
       console.error('Error al obtener facturas:', error);
       throw new Error('No se pudieron cargar las facturas');
@@ -160,21 +144,29 @@ export const InvoiceService = {
   
   async create(invoiceData) {
     try {
-      console.log('Creando factura:', invoiceData);
+      if (!invoiceData.clientName) {
+        throw new Error('Nombre del cliente es requerido');
+      }
       
-      // Obtener el siguiente número de factura
+      const subtotal = invoiceData.items.reduce((sum, item) => sum + item.total, 0);
       const invoices = await this.getAll();
       const counter = invoices.length + 1;
+      
       const invoiceWithNumber = {
-        ...invoiceData,
+        clientId: invoiceData.clientId || '',
+        clientName: invoiceData.clientName,
+        clientPhone: invoiceData.clientPhone || '',
+        clientAddress: invoiceData.clientAddress || '',
+        date: invoiceData.date,
+        items: invoiceData.items,
+        subtotal: subtotal,
+        total: subtotal,
         number: `FAC-${counter.toString().padStart(4, '0')}`,
         createdAt: new Date().toISOString()
       };
       
       const docRef = await addDoc(collection(db, 'invoices'), invoiceWithNumber);
-      const newInvoice = { id: docRef.id, ...invoiceWithNumber };
-      console.log('Factura creada exitosamente:', newInvoice);
-      return newInvoice;
+      return { id: docRef.id, ...invoiceWithNumber };
     } catch (error) {
       console.error('Error al crear factura:', error);
       throw new Error('Error al crear la factura: ' + error.message);
@@ -183,9 +175,7 @@ export const InvoiceService = {
   
   async delete(id) {
     try {
-      console.log('Eliminando factura:', id);
       await deleteDoc(doc(db, 'invoices', id));
-      console.log('Factura eliminada exitosamente');
     } catch (error) {
       console.error('Error al eliminar factura:', error);
       throw new Error('Error al eliminar la factura: ' + error.message);

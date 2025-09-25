@@ -44,17 +44,16 @@ export class ClientForm {
         document.getElementById('client-address').value = client.address || '';
       }
       
-      // Manejar el botón de guardar
       const saveButton = modal.element.querySelector('.confirm-modal');
       if (saveButton) {
         saveButton.onclick = async () => {
-          await this.handleSave(modal);
+          await this.handleSave(modal, client);
         };
       }
     });
   }
   
-  async handleSave(modal) {
+  async handleSave(modal, editingClient = null) {
     const errorDiv = document.getElementById('error-message');
     if (errorDiv) {
       errorDiv.classList.add('hidden');
@@ -68,7 +67,7 @@ export class ClientForm {
       const phone = document.getElementById('client-phone').value.trim();
       const address = document.getElementById('client-address').value.trim();
       
-      // Validación
+      // Validación básica
       if (!name) {
         this.showError('Por favor ingrese el nombre completo');
         return;
@@ -79,6 +78,44 @@ export class ClientForm {
         return;
       }
       
+      // Validación de duplicados (solo para nuevos clientes)
+      if (!id) {
+        const existingClients = await ClientService.getAll();
+        
+        // Verificar duplicados por teléfono
+        const phoneExists = existingClients.some(client => 
+          client.phone === phone
+        );
+        
+        if (phoneExists) {
+          this.showError('Ya existe un cliente con este número de teléfono');
+          return;
+        }
+        
+        // Verificar duplicados por email (si se proporciona)
+        if (email) {
+          const emailExists = existingClients.some(client => 
+            client.email && client.email.toLowerCase() === email.toLowerCase()
+          );
+          
+          if (emailExists) {
+            this.showError('Ya existe un cliente con este email');
+            return;
+          }
+        }
+        
+        // Verificar duplicados por nombre (opcional, más flexible)
+        const nameExists = existingClients.some(client => 
+          client.name.toLowerCase() === name.toLowerCase()
+        );
+        
+        // Puedes decidir si quieres bloquear por nombre o no
+        // if (nameExists) {
+        //   this.showError('Ya existe un cliente con este nombre');
+        //   return;
+        // }
+      }
+      
       const clientData = {
         name,
         email: email || '',
@@ -86,15 +123,12 @@ export class ClientForm {
         address: address || ''
       };
       
-      console.log('Datos a guardar:', clientData);
-      
       if (id) {
         await ClientService.update(id, clientData);
       } else {
         await ClientService.create(clientData);
       }
       
-      // Éxito
       this.onSubmit();
       modal.close();
       

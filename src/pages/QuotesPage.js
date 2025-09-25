@@ -11,7 +11,6 @@ export class QuotesPage {
     const container = document.createElement('div');
     container.className = 'space-y-6';
     
-    // Header with button
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center';
     header.innerHTML = `
@@ -21,14 +20,18 @@ export class QuotesPage {
     
     container.appendChild(header);
     
-    // Document list
-    this.documentList = new DocumentList('quote', () => this.refresh());
-    container.appendChild(this.documentList.render());
+    const documentList = new DocumentList('quote', () => this.refresh());
+    container.appendChild(documentList.render());
     
-    // Add event listener to new quote button
-    container.querySelector('#new-quote-btn').addEventListener('click', () => {
-      this.documentForm.show();
-    });
+    // Asegurar que el evento se agregue después de que el elemento esté en el DOM
+    setTimeout(() => {
+      const newQuoteBtn = document.getElementById('new-quote-btn');
+      if (newQuoteBtn) {
+        newQuoteBtn.addEventListener('click', () => {
+          this.documentForm.show();
+        });
+      }
+    }, 100);
     
     return container;
   }

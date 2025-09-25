@@ -7,10 +7,12 @@ export class ClientsPage {
     this.clientForm = new ClientForm(() => this.refresh());
   }
   
+  // render() devuelve un elemento DOM inmediatamente
   render() {
     const container = document.createElement('div');
     container.className = 'space-y-6';
     
+    // Header
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center';
     header.innerHTML = `
@@ -20,12 +22,14 @@ export class ClientsPage {
     
     container.appendChild(header);
     
-    this.clientList = new ClientList(
+    // Lista de clientes (se cargará asíncronamente)
+    const clientList = new ClientList(
       (client) => this.clientForm.show(client),
       () => this.refresh()
     );
-    container.appendChild(this.clientList.render());
+    container.appendChild(clientList.render());
     
+    // Evento para nuevo cliente
     container.querySelector('#new-client-btn').addEventListener('click', () => {
       this.clientForm.show();
     });
@@ -33,8 +37,7 @@ export class ClientsPage {
     return container;
   }
   
-  async refresh() {
-    // Recargar datos desde Firebase
+  refresh() {
     const container = this.render();
     const currentContainer = document.querySelector('#page-content');
     if (currentContainer) {
