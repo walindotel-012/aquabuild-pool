@@ -29,10 +29,13 @@ export class ClientForm {
           <label for="client-address" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
           <input type="text" id="client-address" class="form-control">
         </div>
+        <div id="error-message" class="text-red-500 text-sm hidden"></div>
       </form>
     `;
     
     this.modal.show(title, formHTML, 'Guardar Cliente', (modal) => {
+      const errorDiv = document.getElementById('error-message');
+      
       if (client) {
         document.getElementById('client-id').value = client.id;
         document.getElementById('client-name').value = client.name;
@@ -41,32 +44,71 @@ export class ClientForm {
         document.getElementById('client-address').value = client.address || '';
       }
       
-      document.getElementById('client-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.handleSubmit(modal);
-      });
+      // Manejar el botón de guardar
+      const saveButton = modal.element.querySelector('.confirm-modal');
+      if (saveButton) {
+        saveButton.onclick = async () => {
+          await this.handleSave(modal);
+        };
+      }
     });
   }
   
-  async handleSubmit(modal) {
-    const id = document.getElementById('client-id').value;
-    const clientData = {
-      name: document.getElementById('client-name').value,
-      email: document.getElementById('client-email').value,
-      phone: document.getElementById('client-phone').value,
-      address: document.getElementById('client-address').value
-    };
+  async handleSave(modal) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+    }
     
     try {
+      const id = document.getElementById('client-id').value;
+      const name = document.getElementById('client-name').value.trim();
+      const email = document.getElementById('client-email').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
+      const address = document.getElementById('client-address').value.trim();
+      
+      // Validación
+      if (!name) {
+        this.showError('Por favor ingrese el nombre completo');
+        return;
+      }
+      
+      if (!phone) {
+        this.showError('Por favor ingrese el teléfono');
+        return;
+      }
+      
+      const clientData = {
+        name,
+        email: email || '',
+        phone,
+        address: address || ''
+      };
+      
+      console.log('Datos a guardar:', clientData);
+      
       if (id) {
         await ClientService.update(id, clientData);
       } else {
         await ClientService.create(clientData);
       }
+      
+      // Éxito
       this.onSubmit();
       modal.close();
+      
     } catch (error) {
-      alert('Error al guardar el cliente: ' + error.message);
+      console.error('Error en handleSave:', error);
+      this.showError(error.message || 'Error al guardar el cliente');
+    }
+  }
+  
+  showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
     }
   }
 }
