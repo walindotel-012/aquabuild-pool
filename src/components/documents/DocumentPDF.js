@@ -21,12 +21,13 @@ export class DocumentPDF {
     // 🏢 Encabezado empresa
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(...primaryColor);
     doc.text('MANTENIMIENTO & REPARACIONES', 20, 20);
     doc.text('DURAN', 20, 26);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
     doc.text('DIRECCIÓN: Calle Buen Pastor #5 Alondra, Pantoja', 20, 34);
     doc.text('TELÉFONO: (809) 856-7741', 20, 39);
     doc.text('CORREO: rogeliodurran88@gmail.com', 20, 44);
@@ -34,6 +35,7 @@ export class DocumentPDF {
     // 📄 Bloque Cotización a la derecha
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
+    doc.setTextColor(...primaryColor);
     doc.text('COTIZACIÓN', pageWidth - 20, 20, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
@@ -121,8 +123,8 @@ export class DocumentPDF {
     });
 
     // ✍️ Firma cliente
-    currentY += 10;
-    doc.text('Nombre del cliente: ____________________________', 20, currentY);
+    currentY += 14;
+    doc.text('Firma del cliente: ____________________________', 20, currentY);
 
     // 📞 Nota de contacto
     currentY += 15;
