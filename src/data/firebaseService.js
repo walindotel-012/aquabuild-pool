@@ -12,15 +12,16 @@ import {
 
 // Clientes
 export const ClientService = {
-  async getAll() {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'clients'));
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.error('Error al obtener clientes:', error);
-      throw new Error('No se pudieron cargar los clientes');
-    }
-  },
+ async getAll() {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'clients'));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener clientes:', error);
+    throw new Error('No se pudieron cargar los clientes');
+  }
+},
+
   
   async getById(id) {
     try {

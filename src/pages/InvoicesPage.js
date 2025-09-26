@@ -12,8 +12,8 @@ export class InvoicesPage {
     container.className = 'space-y-6';
     
     const header = document.createElement('div');
-    header.className = 'space-y-4';
-    header.innerHTML = `
+header.className = 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4';
+header.innerHTML =  `
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 class="text-2xl font-bold text-gray-800">Gestión de Facturas</h2>
         <button id="new-invoice-btn" class="btn btn-primary whitespace-nowrap">+ Nueva Factura</button>

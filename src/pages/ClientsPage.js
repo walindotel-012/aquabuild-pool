@@ -14,11 +14,11 @@ export class ClientsPage {
     
     // Header
     const header = document.createElement('div');
-    header.className = 'flex justify-between items-center';
-    header.innerHTML = `
-      <h2 class="text-2xl font-bold text-gray-800">Gestión de Clientes</h2>
-      <button id="new-client-btn" class="btn btn-primary">+ Nuevo Cliente</button>
-    `;
+header.className = 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4';
+header.innerHTML = `
+  <h2 class="text-2xl font-bold text-gray-800">Gestión de Clientes</h2>
+  <button id="new-client-btn" class="btn btn-primary">+ Nuevo Cliente</button>
+`;
     
     container.appendChild(header);
     
