@@ -64,3 +64,77 @@ body {
 .table tr:hover {
   @apply bg-gray-50;
 }
+@media (max-width: 768px) {
+  .card {
+    padding: 16px;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .form-control {
+    padding: 10px 12px;
+    font-size: 0.875rem;
+  }
+  
+  .item-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .item-row > div {
+    width: 100% !important;
+  }
+  
+  .action-buttons, .flex.space-x-2 {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  .flex-col.sm\:flex-row {
+    flex-direction: column !important;
+  }
+  
+  .gap-4 {
+    gap: 12px !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem !important;
+  }
+}
+
+.table td, .table th {
+  padding: 8px 6px;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 480px) {
+  .btn {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+  
+  .card {
+    padding: 12px;
+  }
+}

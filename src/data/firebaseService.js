@@ -89,36 +89,37 @@ export const QuoteService = {
   },
   
   async create(quoteData) {
-    try {
-      if (!quoteData.clientName) {
-        throw new Error('Nombre del cliente es requerido');
-      }
-      
-      const subtotal = quoteData.items.reduce((sum, item) => sum + item.total, 0);
-      const quotes = await this.getAll();
-      const counter = quotes.length + 1;
-      
-      const quoteWithNumber = {
-        clientId: quoteData.clientId || '',
-        clientName: quoteData.clientName,
-        clientPhone: quoteData.clientPhone || '',
-        clientAddress: quoteData.clientAddress || '',
-        date: quoteData.date,
-        items: quoteData.items,
-        subtotal: subtotal,
-        total: subtotal,
-        number: `COT-${counter.toString().padStart(4, '0')}`,
-        status: 'Pendiente',
-        createdAt: new Date().toISOString()
-      };
-      
-      const docRef = await addDoc(collection(db, 'quotes'), quoteWithNumber);
-      return { id: docRef.id, ...quoteWithNumber };
-    } catch (error) {
-      console.error('Error al crear cotización:', error);
-      throw new Error('Error al crear la cotización: ' + error.message);
+  try {
+    if (!quoteData.clientName) {
+      throw new Error('Nombre del cliente es requerido');
     }
-  },
+    
+    const subtotal = quoteData.items.reduce((sum, item) => sum + item.total, 0);
+    const quotes = await this.getAll();
+    const counter = quotes.length + 1;
+    
+    const quoteWithNumber = {
+      clientId: quoteData.clientId || '',
+      clientName: quoteData.clientName,
+      clientPhone: quoteData.clientPhone || '',
+      clientAddress: quoteData.clientAddress || '',
+      date: quoteData.date,
+      items: quoteData.items,
+      subtotal: subtotal,
+      total: subtotal,
+      number: `COT-${counter.toString().padStart(4, '0')}`,
+      status: 'Pendiente',
+      converted: false,
+      createdAt: new Date().toISOString()
+    };
+    
+    const docRef = await addDoc(collection(db, 'quotes'), quoteWithNumber);
+    return { id: docRef.id, ...quoteWithNumber };
+  } catch (error) {
+    console.error('Error al crear cotización:', error);
+    throw new Error('Error al crear la cotización: ' + error.message);
+  }
+},
   
   async delete(id) {
     try {
@@ -143,35 +144,36 @@ export const InvoiceService = {
   },
   
   async create(invoiceData) {
-    try {
-      if (!invoiceData.clientName) {
-        throw new Error('Nombre del cliente es requerido');
-      }
-      
-      const subtotal = invoiceData.items.reduce((sum, item) => sum + item.total, 0);
-      const invoices = await this.getAll();
-      const counter = invoices.length + 1;
-      
-      const invoiceWithNumber = {
-        clientId: invoiceData.clientId || '',
-        clientName: invoiceData.clientName,
-        clientPhone: invoiceData.clientPhone || '',
-        clientAddress: invoiceData.clientAddress || '',
-        date: invoiceData.date,
-        items: invoiceData.items,
-        subtotal: subtotal,
-        total: subtotal,
-        number: `FAC-${counter.toString().padStart(4, '0')}`,
-        createdAt: new Date().toISOString()
-      };
-      
-      const docRef = await addDoc(collection(db, 'invoices'), invoiceWithNumber);
-      return { id: docRef.id, ...invoiceWithNumber };
-    } catch (error) {
-      console.error('Error al crear factura:', error);
-      throw new Error('Error al crear la factura: ' + error.message);
+  try {
+    if (!invoiceData.clientName) {
+      throw new Error('Nombre del cliente es requerido');
     }
-  },
+    
+    const subtotal = invoiceData.items.reduce((sum, item) => sum + item.total, 0);
+    const invoices = await this.getAll();
+    const counter = invoices.length + 1;
+    
+    const invoiceWithNumber = {
+      clientId: invoiceData.clientId || '',
+      clientName: invoiceData.clientName,
+      clientPhone: invoiceData.clientPhone || '',
+      clientAddress: invoiceData.clientAddress || '',
+      date: invoiceData.date,
+      items: invoiceData.items,
+      subtotal: subtotal,
+      total: subtotal,
+      number: `FAC-${counter.toString().padStart(4, '0')}`,
+      relatedQuoteId: invoiceData.relatedQuoteId || null,
+      createdAt: new Date().toISOString()
+    };
+    
+    const docRef = await addDoc(collection(db, 'invoices'), invoiceWithNumber);
+    return { id: docRef.id, ...invoiceWithNumber };
+  } catch (error) {
+    console.error('Error al crear factura:', error);
+    throw new Error('Error al crear la factura: ' + error.message);
+  }
+},
   
   async delete(id) {
     try {

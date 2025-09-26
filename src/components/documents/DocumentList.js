@@ -1,4 +1,3 @@
-// src/components/documents/DocumentList.js
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { DocumentPDF } from './DocumentPDF.js';
 import { formatCurrencyRD, formatDate } from '../../utils/helpers.js';
@@ -64,8 +63,9 @@ export class DocumentList {
               <td class="font-medium">${totalFormatted}</td>
               <td><span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${doc.status}</span></td>
               <td>
-                <div class="flex space-x-2">
+                <div class="flex space-x-2 flex-wrap gap-1">
                   <button class="btn btn-warning btn-sm print-quote" data-id="${doc.id}">Imprimir</button>
+                  <button class="btn btn-success btn-sm convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Convertir a Factura</button>
                   <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
                 </div>
               </td>
@@ -79,7 +79,7 @@ export class DocumentList {
               <td>${formatDate(doc.date)}</td>
               <td class="font-medium">${totalFormatted}</td>
               <td>
-                <div class="flex space-x-2">
+                <div class="flex space-x-2 flex-wrap gap-1">
                   <button class="btn btn-warning btn-sm print-invoice" data-id="${doc.id}">Imprimir</button>
                   <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
                 </div>
@@ -135,6 +135,31 @@ export class DocumentList {
           } catch (error) {
             console.error('Error al generar PDF:', error);
             alert('Error al generar el PDF');
+          }
+        });
+      });
+      
+      // Event listeners para conversión
+      container.querySelectorAll('.convert-to-invoice').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const quoteData = JSON.parse(btn.getAttribute('data-quote'));
+          try {
+            const invoiceData = {
+              clientId: quoteData.clientId,
+              clientName: quoteData.clientName,
+              clientPhone: quoteData.clientPhone,
+              clientAddress: quoteData.clientAddress,
+              date: new Date().toISOString().split('T')[0],
+              items: quoteData.items,
+              total: quoteData.total,
+              relatedQuoteId: quoteData.id
+            };
+            
+            await InvoiceService.create(invoiceData);
+            alert('¡Cotización convertida a factura exitosamente!');
+            this.onDelete();
+          } catch (error) {
+            alert('Error al convertir a factura: ' + error.message);
           }
         });
       });

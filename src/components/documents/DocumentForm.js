@@ -117,7 +117,7 @@ export class DocumentForm {
           <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" required>
         </div>
         <div class="w-24">
-          <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01" required>
+          <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01">
         </div>
         <div class="w-24">
           <input type="text" class="form-control item-total" readonly>
@@ -140,8 +140,8 @@ export class DocumentForm {
     const calculateTotal = () => {
       const quantity = parseFloat(quantityInput.value) || 0;
       const price = parseFloat(priceInput.value) || 0;
-      const total = quantity * price;
-      totalInput.value = total > 0 ? formatCurrencyRD(total) : '';
+      const total = price > 0 ? quantity * price : 0;
+      totalInput.value = price > 0 ? formatCurrencyRD(total) : 'Sin precio';
       this.calculateTotals();
     };
     
@@ -160,9 +160,11 @@ export class DocumentForm {
     const itemRows = document.querySelectorAll('.item-row');
     
     itemRows.forEach(row => {
-      const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
       const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-      total += quantity * price;
+      if (price > 0) {
+        const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
+        total += quantity * price;
+      }
     });
     
     document.getElementById('total').textContent = formatCurrencyRD(total);
@@ -215,12 +217,12 @@ export class DocumentForm {
         const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
         const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
         
-        if (description && quantity > 0 && price > 0) {
+        if (description && quantity > 0) {
           items.push({
             description,
             quantity,
-            price,
-            total: quantity * price
+            price: price || 0,
+            total: price > 0 ? quantity * price : 0
           });
           hasValidItem = true;
         }
