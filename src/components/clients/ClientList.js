@@ -115,13 +115,14 @@ export class ClientList {
   }
   
   async handleDelete(id) {
-    try {
-      await ClientService.delete(id);
-      this.onDelete();
-    } catch (error) {
-      alert('Error al eliminar cliente: ' + error.message);
-    }
+  try {
+    await ClientService.delete(id);
+    toast.success('Cliente eliminado exitosamente');
+    this.onDelete();
+  } catch (error) {
+    toast.error('Error al eliminar cliente: ' + error.message);
   }
+}
   
   escapeHtml(text) {
     if (!text) return '';

@@ -10,10 +10,17 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 export class App {
   constructor() {
-    this.currentPage = null;
-    this.currentUser = null;
-    this.checkAuth();
-  }
+  this.currentPage = null;
+  this.currentUser = null;
+  
+  // Manejo de errores globales
+  window.addEventListener('error', (event) => {
+    toast.error('Ha ocurrido un error inesperado. Por favor, recargue la página.');
+    console.error('Error global:', event.error);
+  });
+  
+  this.checkAuth();
+}
   
   checkAuth() {
     try {
@@ -99,43 +106,38 @@ export class App {
   }
   
   navigate(page) {
-    let newPage;
-    
-    try {
-      switch (page) {
-        case 'dashboard':
-          newPage = new Dashboard();
-          break;
-        case 'clients':
-          newPage = new ClientsPage();
-          break;
-        case 'quotes':
-          newPage = new QuotesPage();
-          break;
-        case 'invoices':
-          newPage = new InvoicesPage();
-          break;
-        case 'logout':
-          this.handleLogout();
-          return;
-        default:
-          newPage = new Dashboard();
-      }
-      
-      this.currentPage = newPage;
-      const pageContent = document.getElementById('page-content');
-      if (pageContent) {
-        pageContent.innerHTML = '';
-        const pageElement = newPage.render();
-        if (pageElement) {
-          pageContent.appendChild(pageElement);
-        }
-      }
-    } catch (error) {
-      console.error('Error al navegar:', error);
-      this.showError('Error al cargar la página: ' + error.message);
-    }
+  let newPage;
+  
+  switch (page) {
+    case 'dashboard':
+      newPage = new Dashboard();
+      break;
+    case 'clients':
+      newPage = new ClientsPage();
+      break;
+    case 'quotes':
+      newPage = new QuotesPage();
+      break;
+    case 'invoices':
+      newPage = new InvoicesPage();
+      break;
+    case 'logout':
+      this.handleLogout();
+      return;
+    default:
+      newPage = new Dashboard();
   }
+  
+  this.currentPage = newPage;
+  document.getElementById('page-content').innerHTML = '';
+  document.getElementById('page-content').appendChild(newPage.render());
+  
+  // Cerrar menú si existe
+  const menu = document.getElementById('dropdown-menu');
+  if (menu) {
+    menu.classList.add('hidden');
+  }
+}
   
   async handleLogout() {
     const confirmed = confirm('¿Estás seguro de que deseas cerrar sesión?');

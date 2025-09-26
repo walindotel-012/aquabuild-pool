@@ -34,37 +34,38 @@ export const ClientService = {
   },
   
   async create(clientData) {
-    try {
-      if (!clientData.name || !clientData.phone) {
-        throw new Error('Nombre y teléfono son requeridos');
-      }
-      
-      const docRef = await addDoc(collection(db, 'clients'), {
-        ...clientData,
-        createdAt: new Date().toISOString()
-      });
-      
-      return { id: docRef.id, ...clientData };
-    } catch (error) {
-      console.error('Error al crear cliente:', error);
-      throw new Error('Error al crear el cliente: ' + error.message);
+  try {
+    // Solo validar que el nombre no esté vacío
+    if (!clientData.name) {
+      throw new Error('Nombre es requerido');
     }
-  },
+    
+    const docRef = await addDoc(collection(db, 'clients'), {
+      ...clientData,
+      createdAt: new Date().toISOString()
+    });
+    
+    return { id: docRef.id, ...clientData };
+  } catch (error) {
+    console.error('Error al crear cliente:', error);
+    throw new Error('Error al crear el cliente: ' + error.message);
+  }
+},
   
   async update(id, clientData) {
-    try {
-      if (!clientData.name || !clientData.phone) {
-        throw new Error('Nombre y teléfono son requeridos');
-      }
-      
-      const docRef = doc(db, 'clients', id);
-      await updateDoc(docRef, clientData);
-      return { id, ...clientData };
-    } catch (error) {
-      console.error('Error al actualizar cliente:', error);
-      throw new Error('Error al actualizar el cliente: ' + error.message);
+  try {
+    if (!clientData.name) {
+      throw new Error('Nombre es requerido');
     }
-  },
+    
+    const docRef = doc(db, 'clients', id);
+    await updateDoc(docRef, clientData);
+    return { id, ...clientData };
+  } catch (error) {
+    console.error('Error al actualizar cliente:', error);
+    throw new Error('Error al actualizar el cliente: ' + error.message);
+  }
+},
   
   async delete(id) {
     try {

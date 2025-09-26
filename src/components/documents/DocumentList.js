@@ -10,98 +10,101 @@ export class DocumentList {
     this.onDelete = onDelete;
   }
   
-  render() {
-    const container = document.createElement('div');
-    container.className = 'card';
+ render() {
+  const container = document.createElement('div');
+  container.className = 'card';
+  
+  // Añadir ID específico para cada tipo
+  const tableId = this.type === 'quote' ? 'quotes-list' : 'invoices-list';
+  
+  container.innerHTML = `
+    <div class="text-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p class="text-gray-600">Cargando ${this.type === 'quote' ? 'cotizaciones' : 'facturas'}...</p>
+    </div>
+  `;
+  
+  this.loadDocuments(container, tableId);
+  return container;
+}
+
+// Actualiza loadDocuments para aceptar el ID:
+async loadDocuments(container, tableId = null) {
+  try {
+    let documents;
+    if (this.type === 'quote') {
+      documents = await QuoteService.getAll();
+    } else {
+      documents = await InvoiceService.getAll();
+    }
     
-    container.innerHTML = `
-      <div class="text-center py-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Cargando ${this.type === 'quote' ? 'cotizaciones' : 'facturas'}...</p>
+    if (documents.length === 0) {
+      const message = this.type === 'quote' 
+        ? 'No hay cotizaciones registradas' 
+        : 'No hay facturas registradas';
+      
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <p class="text-gray-500">${message}</p>
+        </div>
+      `;
+      return;
+    }
+    
+    const headers = this.type === 'quote' 
+      ? '<th>Número</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th>'
+      : '<th>Número</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Acciones</th>';
+    
+    const rows = documents.map(doc => {
+      const totalFormatted = formatCurrencyRD(doc.total);
+      if (this.type === 'quote') {
+        const statusClass = doc.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+        return `
+          <tr>
+            <td class="font-mono">${doc.number}</td>
+            <td class="font-medium">${doc.clientName}</td>
+            <td>${formatDate(doc.date)}</td>
+            <td class="font-medium">${totalFormatted}</td>
+            <td><span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${doc.status}</span></td>
+            <td>
+              <div class="flex space-x-2 flex-wrap gap-1">
+                <button class="btn btn-warning btn-sm print-quote" data-id="${doc.id}">Imprimir</button>
+                <button class="btn btn-success btn-sm convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Convertir a Factura</button>
+                <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      } else {
+        return `
+          <tr>
+            <td class="font-mono">${doc.number}</td>
+            <td class="font-medium">${doc.clientName}</td>
+            <td>${formatDate(doc.date)}</td>
+            <td class="font-medium">${totalFormatted}</td>
+            <td>
+              <div class="flex space-x-2 flex-wrap gap-1">
+                <button class="btn btn-warning btn-sm print-invoice" data-id="${doc.id}">Imprimir</button>
+                <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+    }).join('');
+    
+    const tableHTML = `
+      <div class="table-container">
+        <table class="table" id="${tableId}">
+          <thead>
+            <tr>${headers}</tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     `;
     
-    this.loadDocuments(container);
-    return container;
-  }
-  
-  async loadDocuments(container) {
-    try {
-      let documents;
-      if (this.type === 'quote') {
-        documents = await QuoteService.getAll();
-      } else {
-        documents = await InvoiceService.getAll();
-      }
-      
-      if (documents.length === 0) {
-        const message = this.type === 'quote' 
-          ? 'No hay cotizaciones registradas' 
-          : 'No hay facturas registradas';
-        
-        container.innerHTML = `
-          <div class="text-center py-8">
-            <p class="text-gray-500">${message}</p>
-          </div>
-        `;
-        return;
-      }
-      
-      const headers = this.type === 'quote' 
-        ? '<th>Número</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th>'
-        : '<th>Número</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Acciones</th>';
-      
-      const rows = documents.map(doc => {
-        const totalFormatted = formatCurrencyRD(doc.total);
-        if (this.type === 'quote') {
-          const statusClass = doc.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
-          return `
-            <tr>
-              <td class="font-mono">${doc.number}</td>
-              <td class="font-medium">${doc.clientName}</td>
-              <td>${formatDate(doc.date)}</td>
-              <td class="font-medium">${totalFormatted}</td>
-              <td><span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${doc.status}</span></td>
-              <td>
-                <div class="flex space-x-2 flex-wrap gap-1">
-                  <button class="btn btn-warning btn-sm print-quote" data-id="${doc.id}">Imprimir</button>
-                  <button class="btn btn-success btn-sm convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Convertir a Factura</button>
-                  <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
-                </div>
-              </td>
-            </tr>
-          `;
-        } else {
-          return `
-            <tr>
-              <td class="font-mono">${doc.number}</td>
-              <td class="font-medium">${doc.clientName}</td>
-              <td>${formatDate(doc.date)}</td>
-              <td class="font-medium">${totalFormatted}</td>
-              <td>
-                <div class="flex space-x-2 flex-wrap gap-1">
-                  <button class="btn btn-warning btn-sm print-invoice" data-id="${doc.id}">Imprimir</button>
-                  <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
-                </div>
-              </td>
-            </tr>
-          `;
-        }
-      }).join('');
-      
-      const tableHTML = `
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>${headers}</tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      `;
-      
-      container.innerHTML = tableHTML;
-      
+    container.innerHTML = tableHTML;
       // Event listeners para imprimir
       container.querySelectorAll('.print-quote').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -144,23 +147,12 @@ export class DocumentList {
         btn.addEventListener('click', async (e) => {
           const quoteData = JSON.parse(btn.getAttribute('data-quote'));
           try {
-            const invoiceData = {
-              clientId: quoteData.clientId,
-              clientName: quoteData.clientName,
-              clientPhone: quoteData.clientPhone,
-              clientAddress: quoteData.clientAddress,
-              date: new Date().toISOString().split('T')[0],
-              items: quoteData.items,
-              total: quoteData.total,
-              relatedQuoteId: quoteData.id
-            };
-            
-            await InvoiceService.create(invoiceData);
-            alert('¡Cotización convertida a factura exitosamente!');
-            this.onDelete();
-          } catch (error) {
-            alert('Error al convertir a factura: ' + error.message);
-          }
+      await InvoiceService.create(invoiceData);
+      toast.success('¡Cotización convertida a factura exitosamente!');
+      this.onDelete();
+    } catch (error) {
+      toast.error('Error al convertir a factura: ' + error.message);
+    }
         });
       });
       
@@ -194,15 +186,17 @@ export class DocumentList {
   }
   
   async handleDelete(id) {
-    try {
-      if (this.type === 'quote') {
-        await QuoteService.delete(id);
-      } else {
-        await InvoiceService.delete(id);
-      }
-      this.onDelete();
-    } catch (error) {
-      alert('Error al eliminar: ' + error.message);
+  try {
+    if (this.type === 'quote') {
+      await QuoteService.delete(id);
+      toast.success('Cotización eliminada exitosamente');
+    } else {
+      await InvoiceService.delete(id);
+      toast.success('Factura eliminada exitosamente');
     }
+    this.onDelete();
+  } catch (error) {
+    toast.error('Error al eliminar: ' + error.message);
   }
+}
 }

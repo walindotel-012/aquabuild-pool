@@ -4,6 +4,7 @@ import { DocumentForm } from '../components/documents/DocumentForm.js';
 export class InvoicesPage {
   constructor() {
     this.documentForm = new DocumentForm('invoice', () => this.refresh());
+    this.debounceTimer = null;
   }
   
   render() {
@@ -18,21 +19,13 @@ export class InvoicesPage {
         <button id="new-invoice-btn" class="btn btn-primary whitespace-nowrap">+ Nueva Factura</button>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-          <input type="text" id="search-invoice" class="form-control" placeholder="Cliente, número...">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Fecha desde</label>
-          <input type="date" id="start-date-invoice" class="form-control">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Fecha hasta</label>
-          <input type="date" id="end-date-invoice" class="form-control">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre de cliente</label>
+          <input type="text" id="search-client-invoice" class="form-control" placeholder="Escriba el nombre del cliente...">
         </div>
         <div class="flex items-end">
-          <button id="filter-invoice-btn" class="btn btn-primary w-full">Filtrar</button>
+          <button id="clear-filters-invoice" class="btn btn-outline w-full">Limpiar Filtros</button>
         </div>
       </div>
     `;
@@ -47,26 +40,47 @@ export class InvoicesPage {
         this.documentForm.show();
       });
       
-      document.getElementById('filter-invoice-btn')?.addEventListener('click', () => {
-        const filters = {
-          searchTerm: document.getElementById('search-invoice')?.value || '',
-          startDate: document.getElementById('start-date-invoice')?.value || '',
-          endDate: document.getElementById('end-date-invoice')?.value || ''
-        };
-        this.applyFilters(filters);
+      // Evento de búsqueda en tiempo real
+      const searchInput = document.getElementById('search-client-invoice');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(this.debounceTimer);
+          this.debounceTimer = setTimeout(() => {
+            this.filterInvoices(e.target.value);
+          }, 300); // Debounce de 300ms
+        });
+      }
+      
+      // Evento para limpiar filtros
+      document.getElementById('clear-filters-invoice')?.addEventListener('click', () => {
+        if (searchInput) {
+          searchInput.value = '';
+        }
+        this.filterInvoices('');
       });
     }, 100);
     
     return container;
   }
   
-  applyFilters(filters) {
-    const container = this.render();
-    const currentContainer = document.querySelector('#page-content');
-    if (currentContainer) {
-      currentContainer.innerHTML = '';
-      currentContainer.appendChild(container);
-    }
+  filterInvoices(searchTerm) {
+    const listElement = document.querySelector('#invoices-list');
+    if (!listElement) return;
+    
+    const rows = listElement.querySelectorAll('tbody tr');
+    const searchTermLower = searchTerm.toLowerCase();
+    
+    rows.forEach(row => {
+      const clientCell = row.querySelector('td:nth-child(2)');
+      if (clientCell) {
+        const clientName = clientCell.textContent.toLowerCase();
+        if (clientName.includes(searchTermLower)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      }
+    });
   }
   
   refresh() {

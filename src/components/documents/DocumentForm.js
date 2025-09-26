@@ -2,6 +2,7 @@ import { Modal } from '../ui/Modal.js';
 import { ClientService } from '../../data/firebaseService.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { formatCurrencyRD } from '../../utils/helpers.js';
+import { toast } from '../ui/ToastNotification.js'; 
 
 export class DocumentForm {
   constructor(type, onSubmit) {
@@ -40,9 +41,9 @@ export class DocumentForm {
             
             <div id="new-client-section" class="hidden space-y-3">
               <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
-              <input type="email" id="new-client-email" class="form-control" placeholder="Email">
-              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono *" required>
-              <input type="text" id="new-client-address" class="form-control" placeholder="Dirección">
+              <input type="email" id="new-client-email" class="form-control" placeholder="Email (opcional)">
+              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono (opcional)">
+              <input type="text" id="new-client-address" class="form-control" placeholder="Dirección (opcional)">
             </div>
           </div>
           
@@ -179,7 +180,7 @@ export class DocumentForm {
     
     try {
       const isExistingClient = !document.getElementById('existing-client-section')?.classList.contains('hidden');
-      let clientId, clientName, clientPhone, clientAddress;
+      let clientId, clientName, clientPhone, clientAddress, clientEmail;
       
       if (isExistingClient) {
         clientId = document.getElementById('existing-client')?.value;
@@ -187,25 +188,30 @@ export class DocumentForm {
         const client = await ClientService.getById(clientId);
         if (!client) throw new Error('Cliente no encontrado');
         clientName = client.name;
-        clientPhone = client.phone;
-        clientAddress = client.address;
+        clientPhone = client.phone || '';
+        clientAddress = client.address || '';
+        clientEmail = client.email || '';
       } else {
-        const newClientData = {
-          name: document.getElementById('new-client-name')?.value.trim(),
-          email: document.getElementById('new-client-email')?.value.trim(),
-          phone: document.getElementById('new-client-phone')?.value.trim(),
-          address: document.getElementById('new-client-address')?.value.trim()
-        };
-        
-        if (!newClientData.name || !newClientData.phone) {
-          throw new Error('Nombre y teléfono son requeridos');
+        // Solo el nombre es obligatorio para clientes nuevos
+        clientName = document.getElementById('new-client-name')?.value.trim();
+        if (!clientName) {
+          throw new Error('El nombre del cliente es requerido');
         }
+        
+        clientEmail = document.getElementById('new-client-email')?.value.trim() || '';
+        clientPhone = document.getElementById('new-client-phone')?.value.trim() || '';
+        clientAddress = document.getElementById('new-client-address')?.value.trim() || '';
+        
+        // Crear cliente nuevo con solo el nombre (los demás campos son opcionales)
+        const newClientData = {
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone,
+          address: clientAddress
+        };
         
         const newClient = await ClientService.create(newClientData);
         clientId = newClient.id;
-        clientName = newClient.name;
-        clientPhone = newClient.phone;
-        clientAddress = newClient.address;
       }
       
       const items = [];
@@ -237,23 +243,22 @@ export class DocumentForm {
         clientName,
         clientPhone,
         clientAddress,
+        clientEmail,
         date: document.getElementById('document-date')?.value,
         items,
         total
       };
       
       if (this.type === 'quote') {
-        await QuoteService.create(documentData);
-      } else {
-        await InvoiceService.create(documentData);
-      }
-      
-      alert(this.type === 'quote' 
-        ? '¡Cotización creada exitosamente!' 
-        : '¡Factura creada exitosamente!');
-      
-      this.onSubmit();
-      this.modal.close();
+      await QuoteService.create(documentData);
+      toast.success('¡Cotización creada exitosamente!');
+    } else {
+      await InvoiceService.create(documentData);
+      toast.success('¡Factura creada exitosamente!');
+    }
+    
+    this.onSubmit();
+    this.modal.close();
       
     } catch (error) {
       console.error('Error al guardar documento:', error);

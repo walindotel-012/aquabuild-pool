@@ -4,6 +4,7 @@ import { DocumentForm } from '../components/documents/DocumentForm.js';
 export class QuotesPage {
   constructor() {
     this.documentForm = new DocumentForm('quote', () => this.refresh());
+    this.debounceTimer = null;
   }
   
   render() {
@@ -18,21 +19,13 @@ export class QuotesPage {
         <button id="new-quote-btn" class="btn btn-primary whitespace-nowrap">+ Nueva Cotización</button>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-          <input type="text" id="search-quote" class="form-control" placeholder="Cliente, número...">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Fecha desde</label>
-          <input type="date" id="start-date-quote" class="form-control">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Fecha hasta</label>
-          <input type="date" id="end-date-quote" class="form-control">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre de cliente</label>
+          <input type="text" id="search-client-quote" class="form-control" placeholder="Escriba el nombre del cliente...">
         </div>
         <div class="flex items-end">
-          <button id="filter-quote-btn" class="btn btn-primary w-full">Filtrar</button>
+          <button id="clear-filters-quote" class="btn btn-outline w-full">Limpiar Filtros</button>
         </div>
       </div>
     `;
@@ -47,35 +40,47 @@ export class QuotesPage {
         this.documentForm.show();
       });
       
-      document.getElementById('filter-quote-btn')?.addEventListener('click', () => {
-        const filters = {
-          searchTerm: document.getElementById('search-quote')?.value || '',
-          startDate: document.getElementById('start-date-quote')?.value || '',
-          endDate: document.getElementById('end-date-quote')?.value || ''
-        };
-        this.applyFilters(filters);
+      // Evento de búsqueda en tiempo real
+      const searchInput = document.getElementById('search-client-quote');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(this.debounceTimer);
+          this.debounceTimer = setTimeout(() => {
+            this.filterQuotes(e.target.value);
+          }, 300); // Debounce de 300ms
+        });
+      }
+      
+      // Evento para limpiar filtros
+      document.getElementById('clear-filters-quote')?.addEventListener('click', () => {
+        if (searchInput) {
+          searchInput.value = '';
+        }
+        this.filterQuotes('');
       });
     }, 100);
     
     return container;
   }
   
-  applyFilters(filters) {
-    // Esta implementación se maneja en DocumentList.js
-    const container = this.render();
-    const currentContainer = document.querySelector('#page-content');
-    if (currentContainer) {
-      currentContainer.innerHTML = '';
-      currentContainer.appendChild(container);
-      
-      // Aplicar filtros después de que se cargue la lista
-      setTimeout(() => {
-        const listElement = document.querySelector('.card');
-        if (listElement && listElement.querySelector('.table')) {
-          // Los filtros se aplican automáticamente en la carga
+  filterQuotes(searchTerm) {
+    const listElement = document.querySelector('#quotes-list');
+    if (!listElement) return;
+    
+    const rows = listElement.querySelectorAll('tbody tr');
+    const searchTermLower = searchTerm.toLowerCase();
+    
+    rows.forEach(row => {
+      const clientCell = row.querySelector('td:nth-child(2)');
+      if (clientCell) {
+        const clientName = clientCell.textContent.toLowerCase();
+        if (clientName.includes(searchTermLower)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
         }
-      }, 500);
-    }
+      }
+    });
   }
   
   refresh() {
