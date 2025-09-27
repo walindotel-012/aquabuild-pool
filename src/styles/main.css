@@ -445,3 +445,25 @@ input[type="number"],
 input[type="date"] {
   font-size: 16px;
 }
+/* Estilos para filas alternas en tablas */
+.table thead tr {
+  @apply bg-blue-100;
+}
+
+.table tbody tr:nth-child(even) {
+  @apply bg-blue-200; /* Azul un poco más oscuro */
+}
+
+.table tbody tr:nth-child(odd) {
+  @apply bg-white;
+}
+
+/* Hover en filas */
+.table tbody tr:hover {
+  @apply bg-blue-100;
+}
+
+/* Botón de edición */
+.btn-info {
+  @apply bg-blue-500 text-white hover:bg-blue-600;
+}

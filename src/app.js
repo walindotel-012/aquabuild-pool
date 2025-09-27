@@ -10,18 +10,23 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 export class App {
   constructor() {
-  this.currentPage = null;
-  this.currentUser = null;
-  
-  // Manejo de errores globales
-  window.addEventListener('error', (event) => {
-    toast.error('Ha ocurrido un error inesperado. Por favor, recargue la página.');
-    console.error('Error global:', event.error);
-  });
-  
-  this.checkAuth();
-}
-  
+    this.currentPage = null;
+    this.currentUser = null;
+
+    // Manejo de errores globales
+    window.addEventListener('error', (event) => {
+      toast?.error?.('Ha ocurrido un error inesperado. Por favor, recargue la página.');
+      console.error('Error global:', event.error);
+    });
+
+    // Escuchar cambios en el hash
+    window.addEventListener('hashchange', () => {
+      this.handleHashChange();
+    });
+
+    this.checkAuth();
+  }
+
   checkAuth() {
     try {
       onAuthStateChanged(auth, (user) => {
@@ -40,7 +45,7 @@ export class App {
       this.showError('No se pudo inicializar el sistema de autenticación.');
     }
   }
-  
+
   showError(message) {
     const app = document.getElementById('app');
     if (app) {
@@ -55,13 +60,13 @@ export class App {
       `;
     }
   }
-  
+
   showAuth() {
     const app = document.getElementById('app');
     if (!app) return;
-    
+
     app.innerHTML = '<div class="min-h-screen flex items-center justify-center bg-gray-100">Cargando...</div>';
-    
+
     try {
       const authForm = new AuthForm(
         () => this.initApp(),
@@ -76,11 +81,11 @@ export class App {
       this.showError('No se pudo cargar el formulario de autenticación.');
     }
   }
-  
+
   initApp() {
     const app = document.getElementById('app');
     if (!app) return;
-    
+
     app.innerHTML = `
       <div class="min-h-screen bg-gray-100">
         <header id="app-header"></header>
@@ -89,13 +94,15 @@ export class App {
         </main>
       </div>
     `;
-    
+
     try {
       this.header = new Header((tab) => this.navigate(tab));
       const headerElement = this.header.render();
       if (headerElement) {
         document.getElementById('app-header').appendChild(headerElement);
-        this.navigate('dashboard');
+
+        // Si hay hash, navegar ahí, si no, dashboard
+        this.handleHashChange();
       } else {
         throw new Error('No se pudo crear el header');
       }
@@ -104,41 +111,55 @@ export class App {
       this.showError('Error al inicializar la aplicación principal.');
     }
   }
-  
+
+  handleHashChange() {
+    const hash = window.location.hash.replace('#/', '');
+    if (!hash) {
+      this.navigate('dashboard');
+    } else {
+      this.navigate(hash);
+    }
+  }
+
   navigate(page) {
-  let newPage;
-  
-  switch (page) {
-    case 'dashboard':
-      newPage = new Dashboard();
-      break;
-    case 'clients':
-      newPage = new ClientsPage();
-      break;
-    case 'quotes':
-      newPage = new QuotesPage();
-      break;
-    case 'invoices':
-      newPage = new InvoicesPage();
-      break;
-    case 'logout':
-      this.handleLogout();
-      return;
-    default:
-      newPage = new Dashboard();
+    let newPage;
+
+    switch (page) {
+      case 'dashboard':
+        newPage = new Dashboard((tab) => this.navigate(tab));
+        break;
+      case 'clients':
+        newPage = new ClientsPage();
+        break;
+      case 'quotes':
+        newPage = new QuotesPage();
+        break;
+      case 'invoices':
+        newPage = new InvoicesPage();
+        break;
+      case 'logout':
+        this.handleLogout();
+        return;
+      default:
+        newPage = new Dashboard((tab) => this.navigate(tab));
+    }
+
+    // actualizar hash
+    if (page !== 'logout') {
+      window.location.hash = `#/${page}`;
+    }
+
+    this.currentPage = newPage;
+    document.getElementById('page-content').innerHTML = '';
+    document.getElementById('page-content').appendChild(newPage.render());
+
+    // Cerrar menú si existe
+    const menu = document.getElementById('dropdown-menu');
+    if (menu) {
+      menu.classList.add('hidden');
+    }
   }
-  
-  this.currentPage = newPage;
-  document.getElementById('page-content').innerHTML = '';
-  document.getElementById('page-content').appendChild(newPage.render());
-  
-  // Cerrar menú si existe
-  const menu = document.getElementById('dropdown-menu');
-  if (menu) {
-    menu.classList.add('hidden');
-  }
-}
-  
+
   async handleLogout() {
     const confirmed = confirm('¿Estás seguro de que deseas cerrar sesión?');
     if (confirmed) {

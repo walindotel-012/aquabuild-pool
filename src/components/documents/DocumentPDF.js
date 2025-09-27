@@ -241,12 +241,20 @@ export class DocumentPDF {
     });
 
     // Total
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text('TOTAL:', pageWidth - 60, finalY);
-    doc.text(formatCurrencyRD(invoice.total), pageWidth - 20, finalY, { align: 'right' });
+const finalY = doc.lastAutoTable.finalY + 10;
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(12);
+doc.setTextColor(0, 0, 0);
+
+// Posición de referencia para alinear a la derecha
+const totalX = pageWidth - 20;
+
+// "TOTAL:" alineado a la derecha con un margen
+doc.text('TOTAL:', totalX - 40, finalY, { align: 'right' }); 
+
+// Valor alineado a la derecha
+doc.text(formatCurrencyRD(invoice.total), totalX, finalY, { align: 'right' });
+
 
     // Mensaje final
     const noteY = finalY + 20;

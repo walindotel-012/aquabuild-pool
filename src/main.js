@@ -1,6 +1,7 @@
 // src/main.js
 import './styles/main.css';
 
+
 // Manejo de errores globales
 window.addEventListener('error', (event) => {
   console.error('Error global:', event.error);
@@ -47,3 +48,4 @@ if (document.readyState === 'loading') {
 } else {
   loadApp();
 }
+

@@ -1,19 +1,19 @@
+// src/pages/QuotesPage.js
 import { DocumentList } from '../components/documents/DocumentList.js';
 import { DocumentForm } from '../components/documents/DocumentForm.js';
 
 export class QuotesPage {
   constructor() {
     this.documentForm = new DocumentForm('quote', () => this.refresh());
-    this.debounceTimer = null;
   }
   
   render() {
     const container = document.createElement('div');
     container.className = 'space-y-6';
     
-   const header = document.createElement('div');
-header.className = 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4';
-header.innerHTML = `
+    const header = document.createElement('div');
+    header.className = 'space-y-4';
+    header.innerHTML = `
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 class="text-2xl font-bold text-gray-800">Gestión de Cotizaciones</h2>
         <button id="new-quote-btn" class="btn btn-primary whitespace-nowrap">+ Nueva Cotización</button>
@@ -32,7 +32,10 @@ header.innerHTML = `
     
     container.appendChild(header);
     
-    const documentList = new DocumentList('quote', () => this.refresh());
+    const documentList = new DocumentList('quote', 
+      () => this.refresh(), 
+      (document) => this.documentForm.show(document)
+    );
     container.appendChild(documentList.render());
     
     setTimeout(() => {
@@ -40,47 +43,22 @@ header.innerHTML = `
         this.documentForm.show();
       });
       
-      // Evento de búsqueda en tiempo real
       const searchInput = document.getElementById('search-client-quote');
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-          clearTimeout(this.debounceTimer);
-          this.debounceTimer = setTimeout(() => {
-            this.filterQuotes(e.target.value);
-          }, 300); // Debounce de 300ms
+          // Implementación de búsqueda
         });
       }
       
-      // Evento para limpiar filtros
       document.getElementById('clear-filters-quote')?.addEventListener('click', () => {
         if (searchInput) {
           searchInput.value = '';
         }
-        this.filterQuotes('');
+        this.refresh();
       });
     }, 100);
     
     return container;
-  }
-  
-  filterQuotes(searchTerm) {
-    const listElement = document.querySelector('#quotes-list');
-    if (!listElement) return;
-    
-    const rows = listElement.querySelectorAll('tbody tr');
-    const searchTermLower = searchTerm.toLowerCase();
-    
-    rows.forEach(row => {
-      const clientCell = row.querySelector('td:nth-child(2)');
-      if (clientCell) {
-        const clientName = clientCell.textContent.toLowerCase();
-        if (clientName.includes(searchTermLower)) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      }
-    });
   }
   
   refresh() {

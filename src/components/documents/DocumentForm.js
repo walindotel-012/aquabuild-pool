@@ -1,78 +1,89 @@
+// src/components/documents/DocumentForm.js
 import { Modal } from '../ui/Modal.js';
 import { ClientService } from '../../data/firebaseService.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { formatCurrencyRD } from '../../utils/helpers.js';
-import { toast } from '../ui/ToastNotification.js'; 
+import { toast } from '../ui/ToastNotification.js';
 
 export class DocumentForm {
   constructor(type, onSubmit) {
     this.type = type;
     this.onSubmit = onSubmit;
     this.modal = null;
+    this.currentDocumentId = null;
   }
   
-  async show() {
-    const title = this.type === 'quote' ? 'Nueva Cotización' : 'Nueva Factura';
+  show(document = null) {
+    this.currentDocumentId = document ? document.id : null;
+    
+    const title = document ? 
+      (this.type === 'quote' ? 'Editar Cotización' : 'Editar Factura') : 
+      (this.type === 'quote' ? 'Nueva Cotización' : 'Nueva Factura');
     
     try {
-      const clients = await ClientService.getAll();
-      const clientsOptions = clients.map(client => 
-        `<option value="${client.id}">${client.name}</option>`
-      ).join('');
-      
-      const formHTML = `
-        <form id="document-form" class="space-y-6">
-          <input type="hidden" id="document-type" value="${this.type}">
-          <div id="document-error-message" class="text-red-500 text-sm hidden"></div>
-          
-          <div class="space-y-4">
-            <label class="block text-sm font-medium text-gray-700">Cliente *</label>
-            <div class="flex space-x-3 mb-3">
-              <button type="button" id="select-existing-client" class="btn btn-outline">Seleccionar Existente</button>
-              <button type="button" id="create-new-client" class="btn btn-outline">Crear Nuevo</button>
-            </div>
+      // Cargar clientes
+      ClientService.getAll().then(clients => {
+        const clientsOptions = clients.map(client => 
+          `<option value="${client.id}">${client.name}</option>`
+        ).join('');
+        
+        const formHTML = `
+          <form id="document-form" class="space-y-6">
+            <input type="hidden" id="document-type" value="${this.type}">
+            <div id="document-error-message" class="text-red-500 text-sm hidden"></div>
             
-            <div id="existing-client-section">
-              <select id="existing-client" class="form-control">
-                <option value="">Seleccione un cliente</option>
-                ${clientsOptions}
-              </select>
-            </div>
-            
-            <div id="new-client-section" class="hidden space-y-3">
-              <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
-              <input type="email" id="new-client-email" class="form-control" placeholder="Email (opcional)">
-              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono (opcional)">
-              <input type="text" id="new-client-address" class="form-control" placeholder="Dirección (opcional)">
-            </div>
-          </div>
-          
-          <div>
-            <label for="document-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
-            <input type="date" id="document-date" class="form-control" required>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Items</label>
-            <div id="items-container" class="space-y-3"></div>
-            <button type="button" id="add-item" class="btn btn-success mt-2">+ Agregar Item</button>
-          </div>
-          
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <div class="flex justify-end space-y-2 flex-col">
-              <div class="flex justify-between">
-                <span class="font-medium">Total:</span>
-                <span id="total" class="font-bold text-lg text-blue-600">RD$0.00</span>
+            <div class="space-y-4">
+              <label class="block text-sm font-medium text-gray-700">Cliente *</label>
+              <div class="flex space-x-3 mb-3">
+                <button type="button" id="select-existing-client" class="btn btn-outline">Seleccionar Existente</button>
+                <button type="button" id="create-new-client" class="btn btn-outline">Crear Nuevo</button>
+              </div>
+              
+              <div id="existing-client-section">
+                <select id="existing-client" class="form-control">
+                  <option value="">Seleccione un cliente</option>
+                  ${clientsOptions}
+                </select>
+              </div>
+              
+              <div id="new-client-section" class="hidden space-y-3">
+                <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
+                <input type="email" id="new-client-email" class="form-control" placeholder="Email (opcional)">
+                <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono (opcional)">
+                <input type="text" id="new-client-address" class="form-control" placeholder="Dirección (opcional)">
               </div>
             </div>
-          </div>
-        </form>
-      `;
-      
-      this.modal = new Modal();
-      this.modal.show(title, formHTML, 'Guardar', null);
-      this.setupFormEvents();
-      
+            
+            <div>
+              <label for="document-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+              <input type="date" id="document-date" class="form-control" required>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Items</label>
+              <div id="items-container" class="space-y-3"></div>
+              <button type="button" id="add-item" class="btn btn-success mt-2">+ Agregar Item</button>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex justify-end space-y-2 flex-col">
+                <div class="flex justify-between">
+                  <span class="font-medium">Total:</span>
+                  <span id="total" class="font-bold text-lg text-blue-600">RD$0.00</span>
+                </div>
+              </div>
+            </div>
+          </form>
+        `;
+        
+        this.modal = new Modal();
+        this.modal.show(title, formHTML, 'Guardar', null);
+        this.setupFormEvents();
+        
+        if (document) {
+          this.loadDocumentData(document);
+        }
+      });
     } catch (error) {
       console.error('Error al mostrar formulario:', error);
       alert('Error al cargar el formulario: ' + error.message);
@@ -171,6 +182,56 @@ export class DocumentForm {
     document.getElementById('total').textContent = formatCurrencyRD(total);
   }
   
+  loadDocumentData(document) {
+    // Cliente existente
+    document.getElementById('existing-client-section').classList.remove('hidden');
+    document.getElementById('new-client-section').classList.add('hidden');
+    
+    const clientSelect = document.getElementById('existing-client');
+    if (clientSelect) {
+      let clientOption = Array.from(clientSelect.options).find(opt => 
+        opt.value === document.clientId || opt.textContent === document.clientName
+      );
+      
+      if (!clientOption) {
+        const newOption = document.createElement('option');
+        newOption.value = document.clientId || document.clientName;
+        newOption.textContent = document.clientName;
+        newOption.selected = true;
+        clientSelect.appendChild(newOption);
+      } else {
+        clientOption.selected = true;
+      }
+    }
+    
+    // Fecha
+    document.getElementById('document-date').value = document.date || '';
+    
+    // Items
+    const itemsContainer = document.getElementById('items-container');
+    itemsContainer.innerHTML = '';
+    
+    if (document.items && document.items.length > 0) {
+      document.items.forEach(item => {
+        this.addItem();
+        const lastItem = itemsContainer.lastElementChild;
+        if (lastItem) {
+          const descriptionInput = lastItem.querySelector('.item-description');
+          const quantityInput = lastItem.querySelector('.item-quantity');
+          const priceInput = lastItem.querySelector('.item-price');
+          
+          if (descriptionInput) descriptionInput.value = item.description || '';
+          if (quantityInput) quantityInput.value = item.quantity || 1;
+          if (priceInput) priceInput.value = item.price || 0;
+        }
+      });
+    } else {
+      this.addItem();
+    }
+    
+    this.calculateTotals();
+  }
+  
   async handleSave() {
     const errorDiv = document.getElementById('document-error-message');
     if (errorDiv) {
@@ -192,7 +253,6 @@ export class DocumentForm {
         clientAddress = client.address || '';
         clientEmail = client.email || '';
       } else {
-        // Solo el nombre es obligatorio para clientes nuevos
         clientName = document.getElementById('new-client-name')?.value.trim();
         if (!clientName) {
           throw new Error('El nombre del cliente es requerido');
@@ -202,7 +262,6 @@ export class DocumentForm {
         clientPhone = document.getElementById('new-client-phone')?.value.trim() || '';
         clientAddress = document.getElementById('new-client-address')?.value.trim() || '';
         
-        // Crear cliente nuevo con solo el nombre (los demás campos son opcionales)
         const newClientData = {
           name: clientName,
           email: clientEmail,
@@ -250,24 +309,29 @@ export class DocumentForm {
       };
       
       if (this.type === 'quote') {
-      await QuoteService.create(documentData);
-      toast.success('¡Cotización creada exitosamente!');
-    } else {
-      await InvoiceService.create(documentData);
-      toast.success('¡Factura creada exitosamente!');
-    }
-    
-    this.onSubmit();
-    this.modal.close();
+        if (this.currentDocumentId) {
+          await QuoteService.update(this.currentDocumentId, documentData);
+          toast.success('¡Cotización actualizada exitosamente!');
+        } else {
+          await QuoteService.create(documentData);
+          toast.success('¡Cotización creada exitosamente!');
+        }
+      } else {
+        if (this.currentDocumentId) {
+          await InvoiceService.update(this.currentDocumentId, documentData);
+          toast.success('¡Factura actualizada exitosamente!');
+        } else {
+          await InvoiceService.create(documentData);
+          toast.success('¡Factura creada exitosamente!');
+        }
+      }
+      
+      this.onSubmit();
+      this.modal.close();
       
     } catch (error) {
       console.error('Error al guardar documento:', error);
-      if (errorDiv) {
-        errorDiv.textContent = error.message;
-        errorDiv.classList.remove('hidden');
-      } else {
-        alert('Error: ' + error.message);
-      }
+      toast.error(error.message || 'Error al guardar el documento');
     }
   }
 }

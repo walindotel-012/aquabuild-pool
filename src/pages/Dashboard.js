@@ -4,7 +4,8 @@ import { QuoteService } from '../data/firebaseService.js';
 import { InvoiceService } from '../data/firebaseService.js';
 
 export class Dashboard {
-  constructor() {
+  constructor(onNavigate) {
+    this.onNavigate = onNavigate;
     this.stats = {
       clients: 0,
       quotes: 0,
@@ -19,19 +20,19 @@ export class Dashboard {
     // Mostrar spinner de carga inicial
     container.innerHTML = `
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500">
+        <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500 cursor-pointer hover:shadow-lg transition-shadow" id="clients-card">
           <div class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p class="text-gray-600">Cargando...</p>
           </div>
         </div>
-        <div class="card bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500">
+        <div class="card bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow" id="quotes-card">
           <div class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
             <p class="text-gray-600">Cargando...</p>
           </div>
         </div>
-        <div class="card bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-500">
+        <div class="card bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-500 cursor-pointer hover:shadow-lg transition-shadow" id="invoices-card">
           <div class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto mb-4"></div>
             <p class="text-gray-600">Cargando...</p>
@@ -72,6 +73,9 @@ export class Dashboard {
       // Actualizar el DOM
       this.updateStatsDisplay(container);
       
+      // Agregar eventos de clic a las tarjetas
+      this.addCardClickEvents(container);
+      
     } catch (error) {
       console.error('Error al cargar el dashboard:', error);
       this.showError(container);
@@ -82,7 +86,7 @@ export class Dashboard {
     const statsHTML = `
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Tarjeta de Clientes -->
-        <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+        <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500 cursor-pointer hover:shadow-lg transition-shadow" id="clients-card">
           <div class="text-center">
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-3">
               <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +100,7 @@ export class Dashboard {
         </div>
         
         <!-- Tarjeta de Cotizaciones -->
-        <div class="card bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500 hover:shadow-md transition-shadow">
+        <div class="card bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow" id="quotes-card">
           <div class="text-center">
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
               <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +114,7 @@ export class Dashboard {
         </div>
         
         <!-- Tarjeta de Facturas -->
-        <div class="card bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-500 hover:shadow-md transition-shadow">
+        <div class="card bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-500 cursor-pointer hover:shadow-lg transition-shadow" id="invoices-card">
           <div class="text-center">
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-yellow-100 mb-3">
               <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,6 +169,30 @@ export class Dashboard {
       if (firstGrid) {
         statsContainer.parentNode.replaceChild(firstGrid, statsContainer);
       }
+    }
+  }
+  
+  addCardClickEvents(container) {
+    const clientsCard = container.querySelector('#clients-card');
+    const quotesCard = container.querySelector('#quotes-card');
+    const invoicesCard = container.querySelector('#invoices-card');
+    
+    if (clientsCard) {
+      clientsCard.addEventListener('click', () => {
+        this.onNavigate('clients');
+      });
+    }
+    
+    if (quotesCard) {
+      quotesCard.addEventListener('click', () => {
+        this.onNavigate('quotes');
+      });
+    }
+    
+    if (invoicesCard) {
+      invoicesCard.addEventListener('click', () => {
+        this.onNavigate('invoices');
+      });
     }
   }
   
