@@ -7,7 +7,7 @@
           <button onclick="location.reload()" class="btn btn-primary">Recargar</button>
         </div>
       </div>
-    `)});async function u(){try{const{App:o}=await g(()=>import("./app-41282abc.js").then(r=>r.a),[]);new o}catch(o){console.error("Error al cargar la aplicación:",o);const r=document.getElementById("app");r&&(r.innerHTML=`
+    `)});async function u(){try{const{App:o}=await g(()=>import("./app-6a4fc370.js").then(r=>r.a),[]);new o}catch(o){console.error("Error al cargar la aplicación:",o);const r=document.getElementById("app");r&&(r.innerHTML=`
         <div class="min-h-screen flex items-center justify-center bg-red-50">
           <div class="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
             <h2 class="text-xl font-bold text-red-600 mb-4">Error de carga</h2>
