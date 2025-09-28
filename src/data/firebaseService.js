@@ -177,17 +177,29 @@ export const InvoiceService = {
     }
   },
 
-  async update(id, invoiceData) {
-    try {
-      const docRef = doc(db, 'invoices', id);
-      await updateDoc(docRef, invoiceData);
-      return { id, ...invoiceData };
-    } catch (error) {
-      console.error('Error al actualizar factura:', error);
-      throw new Error('Error al actualizar la factura: ' + error.message);
+ // En InvoiceService, agrega el método update:
+async update(id, invoiceData) {
+  try {
+    if (!invoiceData.clientName) {
+      throw new Error('Nombre del cliente es requerido');
     }
-  },
-
+    
+    const subtotal = invoiceData.items.reduce((sum, item) => sum + item.total, 0);
+    const updatedInvoice = {
+      ...invoiceData,
+      subtotal: subtotal,
+      total: subtotal,
+      updatedAt: new Date().toISOString()
+    };
+    
+    const docRef = doc(db, 'invoices', id);
+    await updateDoc(docRef, updatedInvoice);
+    return { id, ...updatedInvoice };
+  } catch (error) {
+    console.error('Error al actualizar factura:', error);
+    throw new Error('Error al actualizar la factura: ' + error.message);
+  }
+},
   async delete(id) {
     try {
       await deleteDoc(doc(db, 'invoices', id));

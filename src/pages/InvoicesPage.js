@@ -4,7 +4,7 @@ import { DocumentForm } from '../components/documents/DocumentForm.js';
 export class InvoicesPage {
   constructor() {
     this.documentForm = new DocumentForm('invoice', () => this.refresh());
-    this.debounceTimer = null;
+    this.documentList = null;
   }
   
   render() {
@@ -12,28 +12,28 @@ export class InvoicesPage {
     container.className = 'space-y-6';
     
     const header = document.createElement('div');
-header.className = 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4';
-header.innerHTML =  `
+    header.className = 'space-y-4';
+    header.innerHTML = `
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 class="text-2xl font-bold text-gray-800">Gestión de Facturas</h2>
         <button id="new-invoice-btn" class="btn btn-primary whitespace-nowrap">+ Nueva Factura</button>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre de cliente</label>
-          <input type="text" id="search-client-invoice" class="form-control" placeholder="Escriba el nombre del cliente...">
-        </div>
-        <div class="flex items-end">
-          <button id="clear-filters-invoice" class="btn btn-outline w-full">Limpiar Filtros</button>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por cliente, número o monto</label>
+          <input type="text" id="search-invoice" class="form-control" placeholder="Ej: Juan Pérez, FAC-0001, 50000">
         </div>
       </div>
     `;
     
     container.appendChild(header);
     
-    const documentList = new DocumentList('invoice', () => this.refresh());
-    container.appendChild(documentList.render());
+    this.documentList = new DocumentList('invoice', () => this.refresh());
+    this.documentList.setOnEditCallback((type, document) => {
+      this.documentForm.show(document);
+    });
+    container.appendChild(this.documentList.render());
     
     setTimeout(() => {
       document.getElementById('new-invoice-btn')?.addEventListener('click', () => {
@@ -41,46 +41,25 @@ header.innerHTML =  `
       });
       
       // Evento de búsqueda en tiempo real
-      const searchInput = document.getElementById('search-client-invoice');
+      const searchInput = document.getElementById('search-invoice');
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-          clearTimeout(this.debounceTimer);
-          this.debounceTimer = setTimeout(() => {
-            this.filterInvoices(e.target.value);
-          }, 300); // Debounce de 300ms
+          this.handleSearch(e.target.value);
         });
       }
-      
-      // Evento para limpiar filtros
-      document.getElementById('clear-filters-invoice')?.addEventListener('click', () => {
-        if (searchInput) {
-          searchInput.value = '';
-        }
-        this.filterInvoices('');
-      });
     }, 100);
     
     return container;
   }
   
-  filterInvoices(searchTerm) {
-    const listElement = document.querySelector('#invoices-list');
-    if (!listElement) return;
-    
-    const rows = listElement.querySelectorAll('tbody tr');
-    const searchTermLower = searchTerm.toLowerCase();
-    
-    rows.forEach(row => {
-      const clientCell = row.querySelector('td:nth-child(2)');
-      if (clientCell) {
-        const clientName = clientCell.textContent.toLowerCase();
-        if (clientName.includes(searchTermLower)) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+  handleSearch(searchTerm) {
+    if (this.documentList && this.documentList.currentDocuments) {
+      const filteredDocuments = this.documentList.filterDocuments(searchTerm);
+      const container = document.querySelector('#page-content .card');
+      if (container) {
+        this.documentList.renderDocuments(container, filteredDocuments);
       }
-    });
+    }
   }
   
   refresh() {

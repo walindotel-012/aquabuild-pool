@@ -1,10 +1,10 @@
-// src/pages/QuotesPage.js
 import { DocumentList } from '../components/documents/DocumentList.js';
 import { DocumentForm } from '../components/documents/DocumentForm.js';
 
 export class QuotesPage {
   constructor() {
     this.documentForm = new DocumentForm('quote', () => this.refresh());
+    this.documentList = null;
   }
   
   render() {
@@ -19,46 +19,47 @@ export class QuotesPage {
         <button id="new-quote-btn" class="btn btn-primary whitespace-nowrap">+ Nueva Cotización</button>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre de cliente</label>
-          <input type="text" id="search-client-quote" class="form-control" placeholder="Escriba el nombre del cliente...">
-        </div>
-        <div class="flex items-end">
-          <button id="clear-filters-quote" class="btn btn-outline w-full">Limpiar Filtros</button>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por cliente, número o monto</label>
+          <input type="text" id="search-quote" class="form-control" placeholder="Ej: Juan Pérez, COT-0001, 50000">
         </div>
       </div>
     `;
     
     container.appendChild(header);
     
-    const documentList = new DocumentList('quote', 
-      () => this.refresh(), 
-      (document) => this.documentForm.show(document)
-    );
-    container.appendChild(documentList.render());
+    this.documentList = new DocumentList('quote', () => this.refresh());
+    this.documentList.setOnEditCallback((type, document) => {
+      this.documentForm.show(document);
+    });
+    container.appendChild(this.documentList.render());
     
     setTimeout(() => {
       document.getElementById('new-quote-btn')?.addEventListener('click', () => {
         this.documentForm.show();
       });
       
-      const searchInput = document.getElementById('search-client-quote');
+      // Evento de búsqueda en tiempo real
+      const searchInput = document.getElementById('search-quote');
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-          // Implementación de búsqueda
+          this.handleSearch(e.target.value);
         });
       }
-      
-      document.getElementById('clear-filters-quote')?.addEventListener('click', () => {
-        if (searchInput) {
-          searchInput.value = '';
-        }
-        this.refresh();
-      });
     }, 100);
     
     return container;
+  }
+  
+  handleSearch(searchTerm) {
+    if (this.documentList && this.documentList.currentDocuments) {
+      const filteredDocuments = this.documentList.filterDocuments(searchTerm);
+      const container = document.querySelector('#page-content .card');
+      if (container) {
+        this.documentList.renderDocuments(container, filteredDocuments);
+      }
+    }
   }
   
   refresh() {

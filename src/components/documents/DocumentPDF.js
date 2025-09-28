@@ -241,14 +241,15 @@ export class DocumentPDF {
       }
     });
 
-    // 💰 Total alineado debajo de columna TOTAL
+    // 💰 Total debajo de columna TOTAL
     const finalY = doc.lastAutoTable.finalY + 4;
-    const columnTotalX = pageWidth - 18; // Misma posición que columna TOTAL
+    const columnTotalX = pageWidth - 18;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
     doc.text('TOTAL:', columnTotalX - 24, finalY, { align: 'right' });
-    doc.text(formatCurrencyRD(quote.total), columnTotalX, finalY, { align: 'right' });
+    doc.text(formatCurrencyRD(invoice.total), columnTotalX, finalY, { align: 'right' });
+
     // Mensaje final
     const noteY = finalY + 20;
     doc.setFont('helvetica', 'bold');
