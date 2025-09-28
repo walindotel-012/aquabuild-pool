@@ -1,96 +1,116 @@
-// src/components/documents/DocumentForm.js
 import { Modal } from '../ui/Modal.js';
 import { ClientService } from '../../data/firebaseService.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { formatCurrencyRD } from '../../utils/helpers.js';
-import { toast } from '../ui/ToastNotification.js';
 
 export class DocumentForm {
   constructor(type, onSubmit) {
     this.type = type;
     this.onSubmit = onSubmit;
     this.modal = null;
-    this.currentDocumentId = null;
+    this.quoteToEdit = null;
   }
   
-  show(document = null) {
-    this.currentDocumentId = document ? document.id : null;
-    
-    const title = document ? 
-      (this.type === 'quote' ? 'Editar Cotización' : 'Editar Factura') : 
-      (this.type === 'quote' ? 'Nueva Cotización' : 'Nueva Factura');
+  async show(quote = null) {
+    this.quoteToEdit = quote;
+    const title = quote ? 'Editar Cotización' : (this.type === 'quote' ? 'Nueva Cotización' : 'Nueva Factura');
     
     try {
-      // Cargar clientes
-      ClientService.getAll().then(clients => {
-        const clientsOptions = clients.map(client => 
-          `<option value="${client.id}">${client.name}</option>`
-        ).join('');
-        
-        const formHTML = `
-          <form id="document-form" class="space-y-6">
-            <input type="hidden" id="document-type" value="${this.type}">
-            <div id="document-error-message" class="text-red-500 text-sm hidden"></div>
-            
-            <div class="space-y-4">
-              <label class="block text-sm font-medium text-gray-700">Cliente *</label>
-              <div class="flex space-x-3 mb-3">
-                <button type="button" id="select-existing-client" class="btn btn-outline">Seleccionar Existente</button>
-                <button type="button" id="create-new-client" class="btn btn-outline">Crear Nuevo</button>
-              </div>
-              
-              <div id="existing-client-section">
-                <select id="existing-client" class="form-control">
-                  <option value="">Seleccione un cliente</option>
-                  ${clientsOptions}
-                </select>
-              </div>
-              
-              <div id="new-client-section" class="hidden space-y-3">
-                <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
-                <input type="email" id="new-client-email" class="form-control" placeholder="Email (opcional)">
-                <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono (opcional)">
-                <input type="text" id="new-client-address" class="form-control" placeholder="Dirección (opcional)">
-              </div>
+      const clients = await ClientService.getAll();
+      const clientsOptions = clients.map(client => 
+        `<option value="${client.id}" ${quote && client.id === quote.clientId ? 'selected' : ''}>${client.name}</option>`
+      ).join('');
+      
+      // Preparar items para edición
+      let itemsHTML = '';
+      if (quote && quote.items) {
+        itemsHTML = quote.items.map(item => `
+          <div class="item-row flex space-x-3 p-3 bg-white rounded border">
+            <div class="w-16">
+              <input type="number" class="form-control item-quantity" placeholder="1" min="1" value="${item.quantity}" required>
+            </div>
+            <div class="flex-1">
+              <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" value="${item.description}" required>
+            </div>
+            <div class="w-24">
+              <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01" value="${item.price || ''}">
+            </div>
+            <div class="w-24">
+              <input type="text" class="form-control item-total" readonly value="${item.price ? formatCurrencyRD(item.total) : 'Sin precio'}">
+            </div>
+            <button type="button" class="btn btn-danger remove-item self-end">✕</button>
+          </div>
+        `).join('');
+      }
+      
+      const formHTML = `
+        <form id="document-form" class="space-y-6">
+          <input type="hidden" id="document-type" value="${this.type}">
+          <input type="hidden" id="document-id" value="${quote ? quote.id : ''}">
+          <div id="document-error-message" class="text-red-500 text-sm hidden"></div>
+          
+          <div class="space-y-4">
+            <label class="block text-sm font-medium text-gray-700">Cliente *</label>
+            <div class="flex space-x-3 mb-3">
+              <button type="button" id="select-existing-client" class="btn btn-outline">Seleccionar Existente</button>
+              <button type="button" id="create-new-client" class="btn btn-outline">Crear Nuevo</button>
             </div>
             
-            <div>
-              <label for="document-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
-              <input type="date" id="document-date" class="form-control" required>
+            <div id="existing-client-section">
+              <select id="existing-client" class="form-control">
+                <option value="">Seleccione un cliente</option>
+                ${clientsOptions}
+              </select>
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Items</label>
-              <div id="items-container" class="space-y-3"></div>
-              <button type="button" id="add-item" class="btn btn-success mt-2">+ Agregar Item</button>
+            <div id="new-client-section" class="hidden space-y-3">
+              <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
+              <input type="email" id="new-client-email" class="form-control" placeholder="Email">
+              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono *" required>
+              <input type="text" id="new-client-address" class="form-control" placeholder="Dirección">
             </div>
-            
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <div class="flex justify-end space-y-2 flex-col">
-                <div class="flex justify-between">
-                  <span class="font-medium">Total:</span>
-                  <span id="total" class="font-bold text-lg text-blue-600">RD$0.00</span>
-                </div>
+          </div>
+          
+          <div>
+            <label for="document-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+            <input type="date" id="document-date" class="form-control" value="${quote ? quote.date : new Date().toISOString().split('T')[0]}" required>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Items</label>
+            <div id="items-container" class="space-y-3">${itemsHTML}</div>
+            <button type="button" id="add-item" class="btn btn-success mt-2">+ Agregar Item</button>
+          </div>
+          
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="flex justify-end space-y-2 flex-col">
+              <div class="flex justify-between">
+                <span class="font-medium">Total:</span>
+                <span id="total" class="font-bold text-lg text-blue-600">${quote ? formatCurrencyRD(quote.total) : 'RD$0.00'}</span>
               </div>
             </div>
-          </form>
-        `;
-        
-        this.modal = new Modal();
-        this.modal.show(title, formHTML, 'Guardar', null);
-        this.setupFormEvents();
-        
-        if (document) {
-          this.loadDocumentData(document);
-        }
-      });
+          </div>
+        </form>
+      `;
+      
+      this.modal = new Modal();
+      this.modal.show(title, formHTML, 'Guardar', null);
+      this.setupFormEvents(quote);
+      
     } catch (error) {
       console.error('Error al mostrar formulario:', error);
       alert('Error al cargar el formulario: ' + error.message);
     }
   }
   
-  setupFormEvents() {
+  setupFormEvents(quote) {
+    // Configurar cliente existente o nuevo
+    if (quote) {
+      document.getElementById('existing-client').value = quote.clientId;
+      document.getElementById('existing-client-section').classList.remove('hidden');
+      document.getElementById('new-client-section').classList.add('hidden');
+    }
+    
     document.getElementById('select-existing-client')?.addEventListener('click', () => {
       document.getElementById('existing-client-section').classList.remove('hidden');
       document.getElementById('new-client-section').classList.add('hidden');
@@ -101,12 +121,27 @@ export class DocumentForm {
       document.getElementById('new-client-section').classList.remove('hidden');
     });
     
-    document.getElementById('document-date').valueAsDate = new Date();
-    this.addItem();
+    // Configurar fecha
+    if (!quote) {
+      document.getElementById('document-date').valueAsDate = new Date();
+    }
+    
+    // Agregar primer item si no hay items
+    if (!quote || !quote.items || quote.items.length === 0) {
+      this.addItem();
+    }
+    
+    // Botón agregar item
     document.getElementById('add-item')?.addEventListener('click', () => {
       this.addItem();
     });
     
+    // Configurar listeners para items existentes
+    document.querySelectorAll('.item-row').forEach(itemElement => {
+      this.setupItemListeners(itemElement);
+    });
+    
+    // Botón guardar
     const saveButton = this.modal.element.querySelector('.confirm-modal');
     if (saveButton) {
       saveButton.addEventListener('click', async (e) => {
@@ -182,56 +217,6 @@ export class DocumentForm {
     document.getElementById('total').textContent = formatCurrencyRD(total);
   }
   
-  loadDocumentData(document) {
-    // Cliente existente
-    document.getElementById('existing-client-section').classList.remove('hidden');
-    document.getElementById('new-client-section').classList.add('hidden');
-    
-    const clientSelect = document.getElementById('existing-client');
-    if (clientSelect) {
-      let clientOption = Array.from(clientSelect.options).find(opt => 
-        opt.value === document.clientId || opt.textContent === document.clientName
-      );
-      
-      if (!clientOption) {
-        const newOption = document.createElement('option');
-        newOption.value = document.clientId || document.clientName;
-        newOption.textContent = document.clientName;
-        newOption.selected = true;
-        clientSelect.appendChild(newOption);
-      } else {
-        clientOption.selected = true;
-      }
-    }
-    
-    // Fecha
-    document.getElementById('document-date').value = document.date || '';
-    
-    // Items
-    const itemsContainer = document.getElementById('items-container');
-    itemsContainer.innerHTML = '';
-    
-    if (document.items && document.items.length > 0) {
-      document.items.forEach(item => {
-        this.addItem();
-        const lastItem = itemsContainer.lastElementChild;
-        if (lastItem) {
-          const descriptionInput = lastItem.querySelector('.item-description');
-          const quantityInput = lastItem.querySelector('.item-quantity');
-          const priceInput = lastItem.querySelector('.item-price');
-          
-          if (descriptionInput) descriptionInput.value = item.description || '';
-          if (quantityInput) quantityInput.value = item.quantity || 1;
-          if (priceInput) priceInput.value = item.price || 0;
-        }
-      });
-    } else {
-      this.addItem();
-    }
-    
-    this.calculateTotals();
-  }
-  
   async handleSave() {
     const errorDiv = document.getElementById('document-error-message');
     if (errorDiv) {
@@ -240,8 +225,9 @@ export class DocumentForm {
     }
     
     try {
+      const documentId = document.getElementById('document-id').value;
       const isExistingClient = !document.getElementById('existing-client-section')?.classList.contains('hidden');
-      let clientId, clientName, clientPhone, clientAddress, clientEmail;
+      let clientId, clientName, clientPhone, clientAddress;
       
       if (isExistingClient) {
         clientId = document.getElementById('existing-client')?.value;
@@ -249,28 +235,25 @@ export class DocumentForm {
         const client = await ClientService.getById(clientId);
         if (!client) throw new Error('Cliente no encontrado');
         clientName = client.name;
-        clientPhone = client.phone || '';
-        clientAddress = client.address || '';
-        clientEmail = client.email || '';
+        clientPhone = client.phone;
+        clientAddress = client.address;
       } else {
-        clientName = document.getElementById('new-client-name')?.value.trim();
-        if (!clientName) {
-          throw new Error('El nombre del cliente es requerido');
-        }
-        
-        clientEmail = document.getElementById('new-client-email')?.value.trim() || '';
-        clientPhone = document.getElementById('new-client-phone')?.value.trim() || '';
-        clientAddress = document.getElementById('new-client-address')?.value.trim() || '';
-        
         const newClientData = {
-          name: clientName,
-          email: clientEmail,
-          phone: clientPhone,
-          address: clientAddress
+          name: document.getElementById('new-client-name')?.value.trim(),
+          email: document.getElementById('new-client-email')?.value.trim(),
+          phone: document.getElementById('new-client-phone')?.value.trim(),
+          address: document.getElementById('new-client-address')?.value.trim()
         };
+        
+        if (!newClientData.name || !newClientData.phone) {
+          throw new Error('Nombre y teléfono son requeridos');
+        }
         
         const newClient = await ClientService.create(newClientData);
         clientId = newClient.id;
+        clientName = newClient.name;
+        clientPhone = newClient.phone;
+        clientAddress = newClient.address;
       }
       
       const items = [];
@@ -302,36 +285,44 @@ export class DocumentForm {
         clientName,
         clientPhone,
         clientAddress,
-        clientEmail,
         date: document.getElementById('document-date')?.value,
         items,
         total
       };
       
       if (this.type === 'quote') {
-        if (this.currentDocumentId) {
-          await QuoteService.update(this.currentDocumentId, documentData);
-          toast.success('¡Cotización actualizada exitosamente!');
+        if (documentId) {
+          // Actualizar cotización existente
+          await QuoteService.update(documentId, documentData);
         } else {
+          // Crear nueva cotización
           await QuoteService.create(documentData);
-          toast.success('¡Cotización creada exitosamente!');
         }
       } else {
-        if (this.currentDocumentId) {
-          await InvoiceService.update(this.currentDocumentId, documentData);
-          toast.success('¡Factura actualizada exitosamente!');
+        if (documentId) {
+          // Actualizar factura existente
+          await InvoiceService.update(documentId, documentData);
         } else {
+          // Crear nueva factura
           await InvoiceService.create(documentData);
-          toast.success('¡Factura creada exitosamente!');
         }
       }
+      
+      alert(this.type === 'quote' 
+        ? (documentId ? '¡Cotización actualizada exitosamente!' : '¡Cotización creada exitosamente!')
+        : (documentId ? '¡Factura actualizada exitosamente!' : '¡Factura creada exitosamente!'));
       
       this.onSubmit();
       this.modal.close();
       
     } catch (error) {
       console.error('Error al guardar documento:', error);
-      toast.error(error.message || 'Error al guardar el documento');
+      if (errorDiv) {
+        errorDiv.textContent = error.message;
+        errorDiv.classList.remove('hidden');
+      } else {
+        alert('Error: ' + error.message);
+      }
     }
   }
 }
