@@ -5,6 +5,7 @@ export class QuotesPage {
   constructor() {
     this.documentForm = new DocumentForm('quote', () => this.refresh());
     this.documentList = null;
+    this.isInitialized = false;
   }
   
   render() {
@@ -35,19 +36,27 @@ export class QuotesPage {
     });
     container.appendChild(this.documentList.render());
     
-    setTimeout(() => {
-      document.getElementById('new-quote-btn')?.addEventListener('click', () => {
-        this.documentForm.show();
-      });
-      
-      // Evento de búsqueda en tiempo real
-      const searchInput = document.getElementById('search-quote');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          this.handleSearch(e.target.value);
-        });
-      }
-    }, 100);
+    // Configurar eventos solo una vez
+    if (!this.isInitialized) {
+      setTimeout(() => {
+        const newQuoteBtn = document.getElementById('new-quote-btn');
+        if (newQuoteBtn && !newQuoteBtn.hasEventListeners) {
+          newQuoteBtn.addEventListener('click', () => {
+            this.documentForm.show();
+          });
+          newQuoteBtn.hasEventListeners = true;
+        }
+        
+        const searchInput = document.getElementById('search-quote');
+        if (searchInput && !searchInput.hasEventListeners) {
+          searchInput.addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+          });
+          searchInput.hasEventListeners = true;
+        }
+      }, 100);
+      this.isInitialized = true;
+    }
     
     return container;
   }
@@ -63,6 +72,7 @@ export class QuotesPage {
   }
   
   refresh() {
+    this.isInitialized = false; // Reset para la próxima renderización
     const container = this.render();
     const currentContainer = document.querySelector('#page-content');
     if (currentContainer) {

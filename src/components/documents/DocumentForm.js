@@ -1,4 +1,5 @@
 import { Modal } from '../ui/Modal.js';
+import { Toast } from '../ui/Toast.js';
 import { ClientService } from '../../data/firebaseService.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { formatCurrencyRD } from '../../utils/helpers.js';
@@ -21,7 +22,6 @@ export class DocumentForm {
         `<option value="${client.id}" ${quote && client.id === quote.clientId ? 'selected' : ''}>${client.name}</option>`
       ).join('');
       
-      // Preparar items para edición
       let itemsHTML = '';
       if (quote && quote.items) {
         itemsHTML = quote.items.map(item => `
@@ -66,7 +66,7 @@ export class DocumentForm {
             <div id="new-client-section" class="hidden space-y-3">
               <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
               <input type="email" id="new-client-email" class="form-control" placeholder="Email">
-              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono *" required>
+              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono">
               <input type="text" id="new-client-address" class="form-control" placeholder="Dirección">
             </div>
           </div>
@@ -99,12 +99,11 @@ export class DocumentForm {
       
     } catch (error) {
       console.error('Error al mostrar formulario:', error);
-      alert('Error al cargar el formulario: ' + error.message);
+      Toast.showError('Error al cargar el formulario: ' + error.message);
     }
   }
   
   setupFormEvents(quote) {
-    // Configurar cliente existente o nuevo
     if (quote) {
       document.getElementById('existing-client').value = quote.clientId;
       document.getElementById('existing-client-section').classList.remove('hidden');
@@ -121,27 +120,22 @@ export class DocumentForm {
       document.getElementById('new-client-section').classList.remove('hidden');
     });
     
-    // Configurar fecha
     if (!quote) {
       document.getElementById('document-date').valueAsDate = new Date();
     }
     
-    // Agregar primer item si no hay items
     if (!quote || !quote.items || quote.items.length === 0) {
       this.addItem();
     }
     
-    // Botón agregar item
     document.getElementById('add-item')?.addEventListener('click', () => {
       this.addItem();
     });
     
-    // Configurar listeners para items existentes
     document.querySelectorAll('.item-row').forEach(itemElement => {
       this.setupItemListeners(itemElement);
     });
     
-    // Botón guardar
     const saveButton = this.modal.element.querySelector('.confirm-modal');
     if (saveButton) {
       saveButton.addEventListener('click', async (e) => {
@@ -235,25 +229,26 @@ export class DocumentForm {
         const client = await ClientService.getById(clientId);
         if (!client) throw new Error('Cliente no encontrado');
         clientName = client.name;
-        clientPhone = client.phone;
-        clientAddress = client.address;
+        clientPhone = client.phone || '';
+        clientAddress = client.address || '';
       } else {
-        const newClientData = {
-          name: document.getElementById('new-client-name')?.value.trim(),
-          email: document.getElementById('new-client-email')?.value.trim(),
-          phone: document.getElementById('new-client-phone')?.value.trim(),
-          address: document.getElementById('new-client-address')?.value.trim()
-        };
-        
-        if (!newClientData.name || !newClientData.phone) {
-          throw new Error('Nombre y teléfono son requeridos');
+        const newClientName = document.getElementById('new-client-name')?.value.trim();
+        if (!newClientName) {
+          throw new Error('El nombre del cliente es requerido');
         }
+        
+        const newClientData = {
+          name: newClientName,
+          email: document.getElementById('new-client-email')?.value.trim() || '',
+          phone: document.getElementById('new-client-phone')?.value.trim() || '',
+          address: document.getElementById('new-client-address')?.value.trim() || ''
+        };
         
         const newClient = await ClientService.create(newClientData);
         clientId = newClient.id;
         clientName = newClient.name;
-        clientPhone = newClient.phone;
-        clientAddress = newClient.address;
+        clientPhone = newClient.phone || '';
+        clientAddress = newClient.address || '';
       }
       
       const items = [];
@@ -292,37 +287,28 @@ export class DocumentForm {
       
       if (this.type === 'quote') {
         if (documentId) {
-          // Actualizar cotización existente
           await QuoteService.update(documentId, documentData);
+          Toast.show('¡Cotización actualizada exitosamente!');
         } else {
-          // Crear nueva cotización
           await QuoteService.create(documentData);
+          Toast.show('¡Cotización creada exitosamente!');
         }
       } else {
         if (documentId) {
-          // Actualizar factura existente
           await InvoiceService.update(documentId, documentData);
+          Toast.show('¡Factura actualizada exitosamente!');
         } else {
-          // Crear nueva factura
           await InvoiceService.create(documentData);
+          Toast.show('¡Factura creada exitosamente!');
         }
       }
-      
-      alert(this.type === 'quote' 
-        ? (documentId ? '¡Cotización actualizada exitosamente!' : '¡Cotización creada exitosamente!')
-        : (documentId ? '¡Factura actualizada exitosamente!' : '¡Factura creada exitosamente!'));
       
       this.onSubmit();
       this.modal.close();
       
     } catch (error) {
       console.error('Error al guardar documento:', error);
-      if (errorDiv) {
-        errorDiv.textContent = error.message;
-        errorDiv.classList.remove('hidden');
-      } else {
-        alert('Error: ' + error.message);
-      }
+      Toast.showError(error.message || 'Error al guardar el documento');
     }
   }
 }

@@ -57,15 +57,34 @@ export class DocumentPDF {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...primaryColor);
-    doc.text('DATOS DE LA EMPRESA', 20, 62);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
+    doc.text('DATOS DEl CLIENTE', 20, 62);
     doc.setFontSize(9);
-    doc.text(`Cliente: ${quote.clientName || ''}`, 20, 70);
-    doc.text(`Empresa: ${quote.clientCompany || ''}`, 20, 75);
-    doc.text(`Dirección: ${quote.clientAddress || ''}`, 20, 80);
-    doc.text(`Teléfono: ${quote.clientPhone || ''}`, 20, 85);
+    doc.setTextColor(0, 0, 0);
+
+    // Cliente
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cliente:', 20, 70);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${quote.clientName || ''}`, 34, 70);
+
+    // Servicio
+    doc.setFont('helvetica', 'bold');
+    doc.text('Servicio:', 20, 75);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${quote.clientCompany || ''}`, 34, 75);
+
+    // Dirección
+    doc.setFont('helvetica', 'bold');
+    doc.text('Dirección:', 20, 80);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${quote.clientAddress || ''}`, 34, 80);
+
+    // Teléfono
+    doc.setFont('helvetica', 'bold');
+    doc.text('Teléfono:', 20, 85);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${quote.clientPhone || ''}`, 34, 85);
+
 
     // 📋 Tabla Items
     const startY = 100;
@@ -153,7 +172,7 @@ export class DocumentPDF {
     return doc;
   }
 
-  // ---------------- FACTURA ----------------
+ // ---------------- FACTURA ----------------
   static generateInvoicePDF(invoice) {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.width;
@@ -209,7 +228,7 @@ export class DocumentPDF {
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
     doc.text(`Cliente: ${invoice.clientName || ''}`, 20, 70);
-    doc.text(`Dirección: ${invoice.clientAddress || ''}`, 20, 75);
+    doc.text(`Servicio: ${invoice.clientAddress || ''}`, 20, 75);
     doc.text(`Teléfono: ${invoice.clientPhone || ''}`, 20, 80);
 
     // Tabla Items

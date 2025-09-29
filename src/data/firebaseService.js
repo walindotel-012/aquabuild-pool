@@ -85,35 +85,54 @@ export const QuoteService = {
     }
   },
 
-  async create(quoteData) {
-    try {
-      if (!quoteData.clientName) {
-        throw new Error('Nombre del cliente es requerido');
-      }
-      const subtotal = quoteData.items.reduce((sum, item) => sum + item.total, 0);
-      const quotes = await this.getAll();
-      const counter = quotes.length + 1;
-      const quoteWithNumber = {
-        clientId: quoteData.clientId || '',
-        clientName: quoteData.clientName,
-        clientPhone: quoteData.clientPhone || '',
-        clientAddress: quoteData.clientAddress || '',
-        date: quoteData.date,
-        items: quoteData.items,
-        subtotal: subtotal,
-        total: subtotal,
-        number: `COT-${counter.toString().padStart(4, '0')}`,
-        status: 'Pendiente',
-        converted: false,
-        createdAt: new Date().toISOString()
-      };
-      const docRef = await addDoc(collection(db, 'quotes'), quoteWithNumber);
-      return { id: docRef.id, ...quoteWithNumber };
-    } catch (error) {
-      console.error('Error al crear cotización:', error);
-      throw new Error('Error al crear la cotización: ' + error.message);
+ async create(quoteData) {
+  try {
+    if (!quoteData.clientName) {
+      throw new Error('Nombre del cliente es requerido');
     }
-  },
+    
+    const subtotal = quoteData.items.reduce((sum, item) => sum + item.total, 0);
+    
+    // Obtener el siguiente número con formato COT-20100
+    const quotes = await this.getAll();
+    const lastQuote = quotes
+      .filter(q => q.number && q.number.startsWith('COT-'))
+      .sort((a, b) => {
+        const numA = parseInt(a.number.replace('COT-', '')) || 0;
+        const numB = parseInt(b.number.replace('COT-', '')) || 0;
+        return numB - numA;
+      })[0];
+    
+    let nextNumber;
+    if (lastQuote) {
+      const lastNum = parseInt(lastQuote.number.replace('COT-', '')) || 20099;
+      nextNumber = lastNum + 1;
+    } else {
+      nextNumber = 20100; // Comenzar desde COT-20100
+    }
+    
+    const quoteWithNumber = {
+      clientId: quoteData.clientId || '',
+      clientName: quoteData.clientName,
+      clientPhone: quoteData.clientPhone || '',
+      clientAddress: quoteData.clientAddress || '',
+      date: quoteData.date,
+      items: quoteData.items,
+      subtotal: subtotal,
+      total: subtotal,
+      number: `COT-${nextNumber}`,
+      status: 'Pendiente',
+      converted: false,
+      createdAt: new Date().toISOString()
+    };
+    
+    const docRef = await addDoc(collection(db, 'quotes'), quoteWithNumber);
+    return { id: docRef.id, ...quoteWithNumber };
+  } catch (error) {
+    console.error('Error al crear cotización:', error);
+    throw new Error('Error al crear la cotización: ' + error.message);
+  }
+},
 
   async update(id, quoteData) {
     try {
@@ -148,34 +167,53 @@ export const InvoiceService = {
     }
   },
 
-  async create(invoiceData) {
-    try {
-      if (!invoiceData.clientName) {
-        throw new Error('Nombre del cliente es requerido');
-      }
-      const subtotal = invoiceData.items.reduce((sum, item) => sum + item.total, 0);
-      const invoices = await this.getAll();
-      const counter = invoices.length + 1;
-      const invoiceWithNumber = {
-        clientId: invoiceData.clientId || '',
-        clientName: invoiceData.clientName,
-        clientPhone: invoiceData.clientPhone || '',
-        clientAddress: invoiceData.clientAddress || '',
-        date: invoiceData.date,
-        items: invoiceData.items,
-        subtotal: subtotal,
-        total: subtotal,
-        number: `FAC-${counter.toString().padStart(4, '0')}`,
-        relatedQuoteId: invoiceData.relatedQuoteId || null,
-        createdAt: new Date().toISOString()
-      };
-      const docRef = await addDoc(collection(db, 'invoices'), invoiceWithNumber);
-      return { id: docRef.id, ...invoiceWithNumber };
-    } catch (error) {
-      console.error('Error al crear factura:', error);
-      throw new Error('Error al crear la factura: ' + error.message);
+ async create(invoiceData) {
+  try {
+    if (!invoiceData.clientName) {
+      throw new Error('Nombre del cliente es requerido');
     }
-  },
+    
+    const subtotal = invoiceData.items.reduce((sum, item) => sum + item.total, 0);
+    
+    // Obtener el siguiente número con formato FAC-20100
+    const invoices = await this.getAll();
+    const lastInvoice = invoices
+      .filter(i => i.number && i.number.startsWith('FAC-'))
+      .sort((a, b) => {
+        const numA = parseInt(a.number.replace('FAC-', '')) || 0;
+        const numB = parseInt(b.number.replace('FAC-', '')) || 0;
+        return numB - numA;
+      })[0];
+    
+    let nextNumber;
+    if (lastInvoice) {
+      const lastNum = parseInt(lastInvoice.number.replace('FAC-', '')) || 20099;
+      nextNumber = lastNum + 1;
+    } else {
+      nextNumber = 20100; // Comenzar desde FAC-20100
+    }
+    
+    const invoiceWithNumber = {
+      clientId: invoiceData.clientId || '',
+      clientName: invoiceData.clientName,
+      clientPhone: invoiceData.clientPhone || '',
+      clientAddress: invoiceData.clientAddress || '',
+      date: invoiceData.date,
+      items: invoiceData.items,
+      subtotal: subtotal,
+      total: subtotal,
+      number: `FAC-${nextNumber}`,
+      relatedQuoteId: invoiceData.relatedQuoteId || null,
+      createdAt: new Date().toISOString()
+    };
+    
+    const docRef = await addDoc(collection(db, 'invoices'), invoiceWithNumber);
+    return { id: docRef.id, ...invoiceWithNumber };
+  } catch (error) {
+    console.error('Error al crear factura:', error);
+    throw new Error('Error al crear la factura: ' + error.message);
+  }
+},
 
  // En InvoiceService, agrega el método update:
 async update(id, invoiceData) {

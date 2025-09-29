@@ -125,12 +125,12 @@ export class App {
     let newPage;
 
     switch (page) {
-      case 'dashboard':
-        newPage = new Dashboard((tab) => this.navigate(tab));
-        break;
-      case 'clients':
-        newPage = new ClientsPage();
-        break;
+    case 'dashboard':
+      newPage = new Dashboard(this.currentUser);
+      break;
+    case 'clients':
+      newPage = new ClientsPage(); // ← Esto devuelve un objeto con método render()
+      break;
       case 'quotes':
         newPage = new QuotesPage();
         break;
@@ -142,6 +142,10 @@ export class App {
         return;
       default:
         newPage = new Dashboard((tab) => this.navigate(tab));
+
+          const pageElement = newPage.render();
+  document.getElementById('page-content').innerHTML = '';
+  document.getElementById('page-content').appendChild(pageElement);
     }
 
     // actualizar hash

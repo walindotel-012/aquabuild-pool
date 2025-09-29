@@ -5,6 +5,7 @@ export class InvoicesPage {
   constructor() {
     this.documentForm = new DocumentForm('invoice', () => this.refresh());
     this.documentList = null;
+    this.isInitialized = false;
   }
   
   render() {
@@ -35,19 +36,27 @@ export class InvoicesPage {
     });
     container.appendChild(this.documentList.render());
     
-    setTimeout(() => {
-      document.getElementById('new-invoice-btn')?.addEventListener('click', () => {
-        this.documentForm.show();
-      });
-      
-      // Evento de búsqueda en tiempo real
-      const searchInput = document.getElementById('search-invoice');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          this.handleSearch(e.target.value);
-        });
-      }
-    }, 100);
+    // Configurar eventos solo una vez
+    if (!this.isInitialized) {
+      setTimeout(() => {
+        const newInvoiceBtn = document.getElementById('new-invoice-btn');
+        if (newInvoiceBtn && !newInvoiceBtn.hasEventListeners) {
+          newInvoiceBtn.addEventListener('click', () => {
+            this.documentForm.show();
+          });
+          newInvoiceBtn.hasEventListeners = true;
+        }
+        
+        const searchInput = document.getElementById('search-invoice');
+        if (searchInput && !searchInput.hasEventListeners) {
+          searchInput.addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+          });
+          searchInput.hasEventListeners = true;
+        }
+      }, 100);
+      this.isInitialized = true;
+    }
     
     return container;
   }
@@ -63,6 +72,7 @@ export class InvoicesPage {
   }
   
   refresh() {
+    this.isInitialized = false; // Reset para la próxima renderización
     const container = this.render();
     const currentContainer = document.querySelector('#page-content');
     if (currentContainer) {

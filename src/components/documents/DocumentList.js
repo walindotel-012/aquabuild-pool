@@ -1,3 +1,4 @@
+import { Toast } from '../ui/Toast.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { DocumentPDF } from './DocumentPDF.js';
 import { formatCurrencyRD, formatDate } from '../../utils/helpers.js';
@@ -8,7 +9,6 @@ export class DocumentList {
   constructor(type, onDelete) {
     this.type = type;
     this.onDelete = onDelete;
-    this.currentDocuments = [];
   }
   
   render() {
@@ -54,6 +54,7 @@ export class DocumentList {
       
     } catch (error) {
       console.error('Error al cargar documentos:', error);
+      Toast.showError('Error al cargar documentos');
       container.innerHTML = `
         <div class="text-center py-8">
           <p class="text-red-500">Error al cargar ${this.type === 'quote' ? 'cotizaciones' : 'facturas'}</p>
@@ -136,10 +137,11 @@ export class DocumentList {
             const quote = { id: docSnap.id, ...docSnap.data() };
             const pdf = DocumentPDF.generateQuotePDF(quote);
             pdf.save(`cotizacion_${quote.number}.pdf`);
+            Toast.show('¡Cotización impresa exitosamente!');
           }
         } catch (error) {
           console.error('Error al generar PDF:', error);
-          alert('Error al generar el PDF');
+          Toast.showError('Error al generar el PDF');
         }
       });
     });
@@ -154,10 +156,11 @@ export class DocumentList {
             const invoice = { id: docSnap.id, ...docSnap.data() };
             const pdf = DocumentPDF.generateInvoicePDF(invoice);
             pdf.save(`factura_${invoice.number}.pdf`);
+            Toast.show('¡Factura impresa exitosamente!');
           }
         } catch (error) {
           console.error('Error al generar PDF:', error);
-          alert('Error al generar el PDF');
+          Toast.showError('Error al generar el PDF');
         }
       });
     });
@@ -179,10 +182,10 @@ export class DocumentList {
           };
           
           await InvoiceService.create(invoiceData);
-          alert('¡Cotización convertida a factura exitosamente!');
+          Toast.show('¡Cotización convertida a factura exitosamente!');
           this.onDelete();
         } catch (error) {
-          alert('Error al convertir a factura: ' + error.message);
+          Toast.showError('Error al convertir a factura: ' + error.message);
         }
       });
     });
@@ -225,19 +228,29 @@ export class DocumentList {
     const searchTermLower = searchTerm.toLowerCase();
     
     return this.currentDocuments.filter(doc => {
-      // Buscar por nombre de cliente
       const clientMatch = doc.clientName.toLowerCase().includes(searchTermLower);
-      
-      // Buscar por número de documento
       const numberMatch = doc.number.toLowerCase().includes(searchTermLower);
-      
-      // Buscar por monto (convertir a texto sin símbolos)
       const totalText = doc.total.toString();
       const totalMatch = totalText.includes(searchTermLower) || 
                         formatCurrencyRD(doc.total).toLowerCase().includes(searchTermLower);
       
       return clientMatch || numberMatch || totalMatch;
     });
+  }
+  
+  async handleDelete(id) {
+    try {
+      if (this.type === 'quote') {
+        await QuoteService.delete(id);
+        Toast.show('¡Cotización eliminada exitosamente!');
+      } else {
+        await InvoiceService.delete(id);
+        Toast.show('¡Factura eliminada exitosamente!');
+      }
+      this.onDelete();
+    } catch (error) {
+      Toast.showError('Error al eliminar: ' + error.message);
+    }
   }
   
   setOnEditCallback(callback) {
@@ -247,19 +260,6 @@ export class DocumentList {
   onEdit(type, document) {
     if (this.onEditCallback) {
       this.onEditCallback(type, document);
-    }
-  }
-  
-  async handleDelete(id) {
-    try {
-      if (this.type === 'quote') {
-        await QuoteService.delete(id);
-      } else {
-        await InvoiceService.delete(id);
-      }
-      this.onDelete();
-    } catch (error) {
-      alert('Error al eliminar: ' + error.message);
     }
   }
 }

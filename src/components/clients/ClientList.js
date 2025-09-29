@@ -1,4 +1,5 @@
 // src/components/clients/ClientList.js
+import { Toast } from '../ui/Toast.js';
 import { ClientService } from '../../data/firebaseService.js';
 
 export class ClientList {
@@ -7,28 +8,13 @@ export class ClientList {
     this.onDelete = onDelete;
   }
   
-  // render() ahora devuelve un elemento DOM inmediatamente
-  render() {
-    const container = document.createElement('div');
-    container.className = 'card';
-    
-    // Mostrar spinner de carga inicialmente
-    container.innerHTML = `
-      <div class="text-center py-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Cargando clientes...</p>
-      </div>
-    `;
-    
-    // Cargar los datos asíncronamente
-    this.loadClients(container);
-    
-    return container;
-  }
-  
-  async loadClients(container) {
+  // render() ahora devuelve una PROMESA
+  async render() {
     try {
       const clients = await ClientService.getAll();
+      
+      const container = document.createElement('div');
+      container.className = 'card';
       
       if (clients.length === 0) {
         container.innerHTML = `
@@ -36,7 +22,7 @@ export class ClientList {
             <p class="text-gray-500">No hay clientes registrados</p>
           </div>
         `;
-        return;
+        return container; // ← Devuelve el elemento DOM
       }
       
       const sortedClients = clients.sort((a, b) => 
@@ -62,7 +48,7 @@ export class ClientList {
                   <td class="font-mono text-xs">${client.id.substring(0, 8)}</td>
                   <td class="font-medium">${this.escapeHtml(client.name)}</td>
                   <td>${client.email || '-'}</td>
-                  <td>${client.phone}</td>
+                  <td>${client.phone || '-'}</td>
                   <td>${client.address || '-'}</td>
                   <td>
                     <div class="flex space-x-2">
@@ -79,7 +65,6 @@ export class ClientList {
       
       container.innerHTML = tableHTML;
       
-      // Agregar event listeners
       container.querySelectorAll('.edit-client').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const id = e.target.getAttribute('data-id');
@@ -99,30 +84,36 @@ export class ClientList {
         });
       });
       
+      return container; // ← Devuelve el elemento DOM
     } catch (error) {
-      console.error('Error al cargar clientes:', error);
+      console.error('Error al renderizar lista de clientes:', error);
+      Toast.showError('Error al cargar los clientes');
+      const container = document.createElement('div');
+      container.className = 'card';
       container.innerHTML = `
         <div class="text-center py-8">
           <p class="text-red-500">Error al cargar los clientes</p>
-          <button class="btn btn-primary mt-4 retry-button">Reintentar</button>
+          <button class="btn btn-primary mt-4 refresh-clients">Reintentar</button>
         </div>
       `;
       
-      container.querySelector('.retry-button').addEventListener('click', () => {
-        this.loadClients(container);
+      container.querySelector('.refresh-clients').addEventListener('click', () => {
+        this.onDelete();
       });
+      
+      return container; // ← Siempre devuelve un elemento DOM
     }
   }
   
   async handleDelete(id) {
-  try {
-    await ClientService.delete(id);
-    toast.success('Cliente eliminado exitosamente');
-    this.onDelete();
-  } catch (error) {
-    toast.error('Error al eliminar cliente: ' + error.message);
+    try {
+      await ClientService.delete(id);
+      Toast.show('¡Cliente eliminado exitosamente!');
+      this.onDelete();
+    } catch (error) {
+      Toast.showError('Error al eliminar cliente: ' + error.message);
+    }
   }
-}
   
   escapeHtml(text) {
     if (!text) return '';
