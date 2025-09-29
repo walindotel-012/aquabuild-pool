@@ -85,13 +85,13 @@ export class DocumentList {
             <td class="font-medium">${totalFormatted}</td>
             <td><span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${doc.status}</span></td>
             <td>
-              <div class="flex space-x-2 flex-wrap gap-1">
-                <button class="btn btn-warning btn-sm print-quote" data-id="${doc.id}">Imprimir</button>
-                <button class="btn btn-success btn-sm convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Convertir a Factura</button>
-                <button class="btn btn-primary btn-sm edit-quote" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Editar</button>
-                <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
-              </div>
-            </td>
+            <div class="flex flex-wrap justify-start items-center gap-2">
+              <button class="btn btn-warning btn-sm min-w-[100px] print-quote" data-id="${doc.id}">Imprimir</button>
+              <button class="btn btn-success btn-sm min-w-[100px] convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Convertir a Factura</button>
+              <button class="btn btn-primary btn-sm min-w-[100px] edit-quote" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Editar</button>
+              <button class="btn btn-danger btn-sm min-w-[100px] delete-doc" data-id="${doc.id}">Eliminar</button>
+            </div>
+          </td>
           </tr>
         `;
       } else {
@@ -102,12 +102,13 @@ export class DocumentList {
             <td>${formatDate(doc.date)}</td>
             <td class="font-medium">${totalFormatted}</td>
             <td>
-              <div class="flex space-x-2 flex-wrap gap-1">
-                <button class="btn btn-warning btn-sm print-invoice" data-id="${doc.id}">Imprimir</button>
-                <button class="btn btn-primary btn-sm edit-invoice" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Editar</button>
-                <button class="btn btn-danger btn-sm delete-doc" data-id="${doc.id}">Eliminar</button>
-              </div>
-            </td>
+            <div class="flex flex-wrap justify-start items-center gap-2">
+              <button class="btn btn-warning btn-sm min-w-[100px] print-invoice" data-id="${doc.id}">Imprimir</button>
+              <button class="btn btn-primary btn-sm min-w-[100px] edit-invoice" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}'>Editar</button>
+              <button class="btn btn-danger btn-sm min-w-[100px] delete-doc" data-id="${doc.id}">Eliminar</button>
+            </div>
+          </td>
+
           </tr>
         `;
       }

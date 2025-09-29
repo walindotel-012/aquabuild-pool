@@ -25,20 +25,20 @@ export class DocumentForm {
       let itemsHTML = '';
       if (quote && quote.items) {
         itemsHTML = quote.items.map(item => `
-          <div class="item-row flex space-x-3 p-3 bg-white rounded border">
-            <div class="w-16">
+          <div class="item-row grid grid-cols-4 gap-2 sm:grid-cols-1 p-3 bg-white rounded border">
+            <div>
               <input type="number" class="form-control item-quantity" placeholder="1" min="1" value="${item.quantity}" required>
             </div>
             <div class="flex-1">
               <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" value="${item.description}" required>
             </div>
-            <div class="w-24">
+            <div>
               <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01" value="${item.price || ''}">
             </div>
-            <div class="w-24">
+            <div>
               <input type="text" class="form-control item-total" readonly value="${item.price ? formatCurrencyRD(item.total) : 'Sin precio'}">
             </div>
-            <button type="button" class="btn btn-danger remove-item self-end">✕</button>
+            <button type="button" class="btn btn-danger remove-item self-end col-span-4 sm:col-span-1">✕</button>
           </div>
         `).join('');
       }
@@ -150,20 +150,20 @@ export class DocumentForm {
     if (!container) return;
     
     const itemHTML = `
-      <div class="item-row flex space-x-3 p-3 bg-white rounded border">
-        <div class="w-16">
+      <div class="item-row grid grid-cols-4 gap-2 sm:grid-cols-1 p-3 bg-white rounded border">
+        <div>
           <input type="number" class="form-control item-quantity" placeholder="1" min="1" value="1" required>
         </div>
         <div class="flex-1">
           <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" required>
         </div>
-        <div class="w-24">
+        <div>
           <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01">
         </div>
-        <div class="w-24">
+        <div>
           <input type="text" class="form-control item-total" readonly>
         </div>
-        <button type="button" class="btn btn-danger remove-item self-end">✕</button>
+        <button type="button" class="btn btn-danger remove-item self-end col-span-4 sm:col-span-1">✕</button>
       </div>
     `;
     

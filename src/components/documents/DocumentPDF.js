@@ -57,7 +57,7 @@ export class DocumentPDF {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...primaryColor);
-    doc.text('DATOS DEl CLIENTE', 20, 62);
+    doc.text('DATOS DEL CLIENTE', 20, 62);
     doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
 
@@ -127,7 +127,7 @@ export class DocumentPDF {
     // 📑 Términos y Condiciones
     const termsY = finalY + 10;
     doc.setDrawColor(...primaryColor);
-    doc.rect(14.2, termsY - 14, pageWidth - 80, 40);
+    doc.rect(14.2, termsY - 14, pageWidth - 70, 40);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);

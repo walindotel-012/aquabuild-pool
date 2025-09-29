@@ -1,16 +1,10 @@
-// src/pages/Dashboard.js
 import { ClientService } from '../data/firebaseService.js';
 import { QuoteService } from '../data/firebaseService.js';
 import { InvoiceService } from '../data/firebaseService.js';
 
 export class Dashboard {
-  constructor(onNavigate) {
-    this.onNavigate = onNavigate;
-    this.stats = {
-      clients: 0,
-      quotes: 0,
-      invoices: 0
-    };
+  constructor(currentUser = null) {
+    this.currentUser = currentUser;
   }
   
   render() {
@@ -63,15 +57,26 @@ export class Dashboard {
         InvoiceService.getAll()
       ]);
       
+      // Obtener el nombre del usuario
+      let displayName = 'Usuario';
+      if (this.currentUser) {
+        if (this.currentUser.displayName) {
+          displayName = this.currentUser.displayName;
+        } else if (this.currentUser.email) {
+          displayName = this.currentUser.email.split('@')[0];
+        }
+      }
+      
       // Actualizar las estadísticas
-      this.stats = {
+      const stats = {
         clients: clients.length,
         quotes: quotes.length,
-        invoices: invoices.length
+        invoices: invoices.length,
+        displayName: displayName
       };
       
       // Actualizar el DOM
-      this.updateStatsDisplay(container);
+      this.updateStatsDisplay(container, stats);
       
       // Agregar eventos de clic a las tarjetas
       this.addCardClickEvents(container);
@@ -82,7 +87,7 @@ export class Dashboard {
     }
   }
   
-  updateStatsDisplay(container) {
+  updateStatsDisplay(container, stats) {
     const statsHTML = `
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Tarjeta de Clientes -->
@@ -94,7 +99,7 @@ export class Dashboard {
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-blue-800 mb-2">Clientes</h3>
-            <p class="text-3xl font-bold text-blue-600">${this.stats.clients}</p>
+            <p class="text-3xl font-bold text-blue-600">${stats.clients}</p>
             <p class="text-sm text-blue-600 mt-1">Total de clientes registrados</p>
           </div>
         </div>
@@ -108,7 +113,7 @@ export class Dashboard {
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-green-800 mb-2">Cotizaciones</h3>
-            <p class="text-3xl font-bold text-green-600">${this.stats.quotes}</p>
+            <p class="text-3xl font-bold text-green-600">${stats.quotes}</p>
             <p class="text-sm text-green-600 mt-1">Cotizaciones generadas</p>
           </div>
         </div>
@@ -122,14 +127,14 @@ export class Dashboard {
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-yellow-800 mb-2">Facturas</h3>
-            <p class="text-3xl font-bold text-yellow-600">${this.stats.invoices}</p>
+            <p class="text-3xl font-bold text-yellow-600">${stats.invoices}</p>
             <p class="text-sm text-yellow-600 mt-1">Facturas emitidas</p>
           </div>
         </div>
       </div>
       
       <div class="card">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Bienvenido a AquaBuild</h2>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Bienvenido a AquaBuild, ${stats.displayName}!</h2>
         <p class="text-gray-600 mb-4">
           Sistema de gestión para empresas de construcción y reparación de piscinas.
           Aquí puede gestionar sus clientes, crear cotizaciones y facturas, y llevar un control
@@ -160,16 +165,8 @@ export class Dashboard {
       </div>
     `;
     
-    // Reemplazar solo la parte de estadísticas
-    const statsContainer = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
-    if (statsContainer) {
-      const newStatsContainer = document.createElement('div');
-      newStatsContainer.innerHTML = statsHTML;
-      const firstGrid = newStatsContainer.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
-      if (firstGrid) {
-        statsContainer.parentNode.replaceChild(firstGrid, statsContainer);
-      }
-    }
+    // Reemplazar todo el contenido
+    container.innerHTML = statsHTML;
   }
   
   addCardClickEvents(container) {
@@ -179,19 +176,19 @@ export class Dashboard {
     
     if (clientsCard) {
       clientsCard.addEventListener('click', () => {
-        this.onNavigate('clients');
+        window.location.hash = 'clients';
       });
     }
     
     if (quotesCard) {
       quotesCard.addEventListener('click', () => {
-        this.onNavigate('quotes');
+        window.location.hash = 'quotes';
       });
     }
     
     if (invoicesCard) {
       invoicesCard.addEventListener('click', () => {
-        this.onNavigate('invoices');
+        window.location.hash = 'invoices';
       });
     }
   }
@@ -204,21 +201,25 @@ export class Dashboard {
           <button class="btn btn-primary mt-4" id="retry-dashboard">Reintentar</button>
         </div>
       </div>
+      
+      <div class="card">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Bienvenido a AquaBuild</h2>
+        <p class="text-gray-600 mb-4">
+          Sistema de gestión para empresas de construcción y reparación de piscinas.
+        </p>
+      </div>
     `;
     
-    const statsContainer = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
-    if (statsContainer) {
-      statsContainer.outerHTML = errorHTML;
-      
-      // Agregar evento al botón de reintento
-      setTimeout(() => {
-        const retryBtn = document.getElementById('retry-dashboard');
-        if (retryBtn) {
-          retryBtn.addEventListener('click', () => {
-            this.loadStats(container);
-          });
-        }
-      }, 100);
-    }
+    container.innerHTML = errorHTML;
+    
+    // Agregar evento al botón de reintento
+    setTimeout(() => {
+      const retryBtn = document.getElementById('retry-dashboard');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          this.loadStats(container);
+        });
+      }
+    }, 100);
   }
 }
