@@ -1,0 +1,46 @@
+{
+  "name": "Piscinas Durán",
+  "short_name": "Piscinas Durán",
+  "description": "Aplicación de gestión para Piscinas Durán - Construcción y Reparación de Piscinas",
+  "start_url": "/aquabuild-pool/",
+  "scope": "/aquabuild-pool/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/aquabuild-pool/2570723.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/aquabuild-pool/2570723.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/aquabuild-pool/2570723.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [
+    {
+      "src": "/aquabuild-pool/2570723.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/aquabuild-pool/2570723.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
