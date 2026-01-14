@@ -1,0 +1,325 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============= TYPOGRAFÍA Y ESTILOS BASE ============= */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============= UTILIDADES ============= */
+.hidden {
+  display: none !important;
+}
+
+/* ============= BOTONES ============= */
+.btn {
+  @apply px-4 py-2 rounded font-medium transition-colors duration-200 cursor-pointer;
+  border: none;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+.btn-warning {
+  @apply bg-yellow-500 text-white hover:bg-yellow-600;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.btn-outline {
+  @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white;
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+
+/* ============= FORMULARIOS ============= */
+.form-control {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+  font-size: 1rem;
+}
+
+.form-control::placeholder {
+  @apply text-gray-400;
+}
+
+/* ============= TARJETAS Y CONTENEDORES ============= */
+.card {
+  @apply bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100;
+}
+
+/* ============= TABLAS ============= */
+.table-container {
+  @apply overflow-x-auto;
+}
+
+.table {
+  @apply w-full border-collapse;
+}
+
+.table th {
+  @apply bg-blue-50 px-6 py-4 text-left text-xs font-semibold text-gray-700 border-b border-gray-200 uppercase tracking-wider;
+}
+
+.table td {
+  @apply px-6 py-4 text-sm border-b border-gray-100;
+}
+
+.table tr {
+  @apply transition-colors duration-150;
+}
+
+.table tbody tr:hover {
+  @apply bg-gray-50;
+}
+
+.table tbody tr:nth-child(odd) {
+  @apply bg-white;
+}
+
+.table tbody tr:nth-child(even) {
+  @apply bg-gray-50;
+}
+
+/* ============= HEADER Y NAVEGACIÓN ============= */
+header {
+  @apply bg-white border-b border-gray-100 sticky top-0 z-50;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+.nav-link {
+  @apply flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 cursor-pointer;
+}
+
+.nav-link.active {
+  @apply font-bold text-blue-600;
+}
+
+/* ============= MENÚ HAMBURGUESA ============= */
+#dropdown-menu {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  width: 20rem;
+  max-width: 90%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 50;
+}
+
+#dropdown-menu:not(.hidden) {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+#menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 40;
+}
+
+#menu-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#menu-toggle {
+  @apply transition-colors duration-200;
+}
+
+#menu-toggle:hover {
+  @apply bg-gray-100;
+}
+
+/* ============= RESPONSIVE DESIGN ============= */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 2rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.75rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-sm {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .form-control {
+    padding: 0.75rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  table {
+    min-width: 500px;
+  }
+
+  .flex-col.sm\:flex-row {
+    flex-direction: column !important;
+  }
+
+  .gap-4 {
+    gap: 0.75rem !important;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  /* Grid responsive */
+  .grid-cols-1.md\:grid-cols-2,
+  .grid-cols-1.md\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal responsive */
+  .modal-content {
+    width: 91.666667% !important;
+    max-width: 100% !important;
+    margin: 1rem auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  /* Botones en full width en móvil */
+  .flex.flex-col.sm\:flex-row {
+    flex-direction: column !important;
+  }
+
+  button.whitespace-nowrap {
+    width: 100%;
+  }
+}
+
+/* ============= ANIMACIONES ============= */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ============= ESTILOS DE ESTADO ============= */
+.bg-gradient-to-br {
+  background: linear-gradient(135deg, var(--tw-gradient-stops));
+}
+
+.from-blue-50 {
+  --tw-gradient-from: #eff6ff;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(239, 246, 255, 0));
+}
+
+.from-blue-500 {
+  --tw-gradient-from: #3b82f6;
+}
+
+.to-blue-600 {
+  --tw-gradient-to: #2563eb;
+}
+
+.from-green-500 {
+  --tw-gradient-from: #10b981;
+}
+
+.to-green-600 {
+  --tw-gradient-to: #059669;
+}
+
+.from-amber-500 {
+  --tw-gradient-from: #f59e0b;
+}
+
+.to-amber-600 {
+  --tw-gradient-to: #d97706;
+}
+
+/* ============= SOMBRAS ============= */
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* ============= COLORES PERSONALIZADOS ============= */
+:root {
+  --color-primary: #2563eb;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-gray-900: #111827;
+  --color-gray-700: #374151;
+  --color-gray-600: #4b5563;
+}

@@ -1,0 +1,314 @@
+import { Modal } from '../ui/Modal.js';
+import { Toast } from '../ui/Toast.js';
+import { ClientService } from '../../data/firebaseService.js';
+import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
+import { formatCurrencyRD } from '../../utils/helpers.js';
+
+export class DocumentForm {
+  constructor(type, onSubmit) {
+    this.type = type;
+    this.onSubmit = onSubmit;
+    this.modal = null;
+    this.quoteToEdit = null;
+  }
+
+  async show(quote = null) {
+    this.quoteToEdit = quote;
+    const title = quote ? 'Editar Cotización' : (this.type === 'quote' ? 'Nueva Cotización' : 'Nueva Factura');
+
+    try {
+      const clients = await ClientService.getAll();
+      const clientsOptions = clients.map(client =>
+        `<option value="${client.id}" ${quote && client.id === quote.clientId ? 'selected' : ''}>${client.name}</option>`
+      ).join('');
+
+      let itemsHTML = '';
+      if (quote && quote.items) {
+        itemsHTML = quote.items.map(item => `
+          <div class="item-row flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0 p-3 bg-white rounded border">
+            <div class="w-full sm:w-16">
+              <input type="number" class="form-control item-quantity" placeholder="1" min="1" value="${item.quantity}" required>
+            </div>
+            <div class="w-full sm:flex-1">
+              <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" value="${item.description}" required>
+            </div>
+            <div class="w-full sm:w-24">
+              <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01" value="${item.price || ''}">
+            </div>
+            <div class="w-full sm:w-24">
+              <input type="text" class="form-control item-total" readonly value="${item.price ? formatCurrencyRD(item.total) : 'Sin precio'}">
+            </div>
+            <button type="button" class="btn btn-danger remove-item self-start sm:self-end">✕</button>
+          </div>
+        `).join('');
+      }
+
+      const formHTML = `
+        <form id="document-form" class="space-y-6">
+          <input type="hidden" id="document-type" value="${this.type}">
+          <input type="hidden" id="document-id" value="${quote ? quote.id : ''}">
+          <div id="document-error-message" class="text-red-500 text-sm hidden"></div>
+
+          <div class="space-y-4">
+            <label class="block text-sm font-medium text-gray-700">Cliente *</label>
+            <div class="flex space-x-3 mb-3">
+              <button type="button" id="select-existing-client" class="btn btn-outline">Seleccionar Existente</button>
+              <button type="button" id="create-new-client" class="btn btn-outline">Crear Nuevo</button>
+            </div>
+
+            <div id="existing-client-section">
+              <select id="existing-client" class="form-control">
+                <option value="">Seleccione un cliente</option>
+                ${clientsOptions}
+              </select>
+            </div>
+
+            <div id="new-client-section" class="hidden space-y-3">
+              <input type="text" id="new-client-name" class="form-control" placeholder="Nombre completo *" required>
+              <input type="email" id="new-client-email" class="form-control" placeholder="Email">
+              <input type="tel" id="new-client-phone" class="form-control" placeholder="Teléfono">
+              <input type="text" id="new-client-address" class="form-control" placeholder="Dirección">
+            </div>
+          </div>
+
+          <div>
+            <label for="document-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+            <input type="date" id="document-date" class="form-control" value="${quote ? quote.date : new Date().toISOString().split('T')[0]}" required>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Items</label>
+            <div id="items-container" class="space-y-3">${itemsHTML}</div>
+            <button type="button" id="add-item" class="btn btn-success mt-2">+ Agregar Item</button>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="flex justify-end space-y-2 flex-col">
+              <div class="flex justify-between">
+                <span class="font-medium">Total:</span>
+                <span id="total" class="font-bold text-lg text-blue-600">${quote ? formatCurrencyRD(quote.total) : 'RD$0.00'}</span>
+              </div>
+            </div>
+          </div>
+        </form>
+      `;
+
+      this.modal = new Modal();
+      this.modal.show(title, formHTML, 'Guardar', null);
+      this.setupFormEvents(quote);
+
+    } catch (error) {
+      console.error('Error al mostrar formulario:', error);
+      Toast.showError('Error al cargar el formulario: ' + error.message);
+    }
+  }
+
+  setupFormEvents(quote) {
+    if (quote) {
+      document.getElementById('existing-client').value = quote.clientId;
+      document.getElementById('existing-client-section').classList.remove('hidden');
+      document.getElementById('new-client-section').classList.add('hidden');
+    }
+
+    document.getElementById('select-existing-client')?.addEventListener('click', () => {
+      document.getElementById('existing-client-section').classList.remove('hidden');
+      document.getElementById('new-client-section').classList.add('hidden');
+    });
+
+    document.getElementById('create-new-client')?.addEventListener('click', () => {
+      document.getElementById('existing-client-section').classList.add('hidden');
+      document.getElementById('new-client-section').classList.remove('hidden');
+    });
+
+    if (!quote) {
+      document.getElementById('document-date').valueAsDate = new Date();
+    }
+
+    if (!quote || !quote.items || quote.items.length === 0) {
+      this.addItem();
+    }
+
+    document.getElementById('add-item')?.addEventListener('click', () => {
+      this.addItem();
+    });
+
+    document.querySelectorAll('.item-row').forEach(itemElement => {
+      this.setupItemListeners(itemElement);
+    });
+
+    const saveButton = this.modal.element.querySelector('.confirm-modal');
+    if (saveButton) {
+      saveButton.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await this.handleSave();
+      });
+    }
+  }
+
+  addItem() {
+    const container = document.getElementById('items-container');
+    if (!container) return;
+
+    const itemHTML = `
+      <div class="item-row flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0 p-3 bg-white rounded border">
+        <div class="w-full sm:w-16">
+          <input type="number" class="form-control item-quantity" placeholder="1" min="1" value="1" required>
+        </div>
+        <div class="w-full sm:flex-1">
+          <input type="text" class="form-control item-description" placeholder="Descripción detallada del servicio" required>
+        </div>
+        <div class="w-full sm:w-24">
+          <input type="number" class="form-control item-price" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="w-full sm:w-24">
+          <input type="text" class="form-control item-total" readonly>
+        </div>
+        <button type="button" class="btn btn-danger remove-item self-start sm:self-end">✕</button>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', itemHTML);
+    const lastItem = container.lastElementChild;
+    this.setupItemListeners(lastItem);
+  }
+
+  setupItemListeners(itemElement) {
+    const quantityInput = itemElement.querySelector('.item-quantity');
+    const priceInput = itemElement.querySelector('.item-price');
+    const totalInput = itemElement.querySelector('.item-total');
+    const removeBtn = itemElement.querySelector('.remove-item');
+
+    const calculateTotal = () => {
+      const quantity = parseFloat(quantityInput.value) || 0;
+      const price = parseFloat(priceInput.value) || 0;
+      const total = price > 0 ? quantity * price : 0;
+      totalInput.value = price > 0 ? formatCurrencyRD(total) : 'Sin precio';
+      this.calculateTotals();
+    };
+
+    quantityInput.addEventListener('input', calculateTotal);
+    priceInput.addEventListener('input', calculateTotal);
+    removeBtn.addEventListener('click', () => {
+      if (itemElement.parentNode) {
+        itemElement.parentNode.removeChild(itemElement);
+        this.calculateTotals();
+      }
+    });
+  }
+
+  calculateTotals() {
+    let total = 0;
+    const itemRows = document.querySelectorAll('.item-row');
+
+    itemRows.forEach(row => {
+      const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+      if (price > 0) {
+        const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
+        total += quantity * price;
+      }
+    });
+
+    document.getElementById('total').textContent = formatCurrencyRD(total);
+  }
+
+  async handleSave() {
+    const errorDiv = document.getElementById('document-error-message');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+    }
+
+    try {
+      const documentId = document.getElementById('document-id').value;
+      const isExistingClient = !document.getElementById('existing-client-section')?.classList.contains('hidden');
+      let clientId, clientName, clientPhone, clientAddress;
+
+      if (isExistingClient) {
+        clientId = document.getElementById('existing-client')?.value;
+        if (!clientId) throw new Error('Por favor seleccione un cliente');
+        const client = await ClientService.getById(clientId);
+        if (!client) throw new Error('Cliente no encontrado');
+        clientName = client.name;
+        clientPhone = client.phone || '';
+        clientAddress = client.address || '';
+      } else {
+        const newClientName = document.getElementById('new-client-name')?.value.trim();
+        if (!newClientName) {
+          throw new Error('El nombre del cliente es requerido');
+        }
+
+        const newClientData = {
+          name: newClientName,
+          email: document.getElementById('new-client-email')?.value.trim() || '',
+          phone: document.getElementById('new-client-phone')?.value.trim() || '',
+          address: document.getElementById('new-client-address')?.value.trim() || ''
+        };
+
+        const newClient = await ClientService.create(newClientData);
+        clientId = newClient.id;
+        clientName = newClient.name;
+        clientPhone = newClient.phone || '';
+        clientAddress = newClient.address || '';
+      }
+
+      const items = [];
+      const itemRows = document.querySelectorAll('.item-row');
+      let hasValidItem = false;
+
+      itemRows.forEach(row => {
+        const description = row.querySelector('.item-description')?.value.trim();
+        const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
+        const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+
+        if (description && quantity > 0) {
+          items.push({
+            description,
+            quantity,
+            price: price || 0,
+            total: price > 0 ? quantity * price : 0
+          });
+          hasValidItem = true;
+        }
+      });
+
+      if (!hasValidItem) throw new Error('Por favor agregue al menos un item válido');
+
+      const total = items.reduce((sum, item) => sum + item.total, 0);
+
+      const documentData = {
+        clientId,
+        clientName,
+        clientPhone,
+        clientAddress,
+        date: document.getElementById('document-date')?.value,
+        items,
+        total
+      };
+
+      if (this.type === 'quote') {
+        if (documentId) {
+          await QuoteService.update(documentId, documentData);
+          Toast.show('¡Cotización actualizada exitosamente!');
+        } else {
+          await QuoteService.create(documentData);
+          Toast.show('¡Cotización creada exitosamente!');
+        }
+      } else {
+        if (documentId) {
+          await InvoiceService.update(documentId, documentData);
+          Toast.show('¡Factura actualizada exitosamente!');
+        } else {
+          await InvoiceService.create(documentData);
+          Toast.show('¡Factura creada exitosamente!');
+        }
+      }
+
+      this.onSubmit();
+      this.modal.close();
+
+    } catch (error) {
+      console.error('Error al guardar documento:', error);
+      Toast.showError(error.message || 'Error al guardar el documento');
+    }
+  }
+}
