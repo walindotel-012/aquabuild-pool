@@ -56,6 +56,12 @@ export class MaintenanceList {
         this.renderMaintenances(maintenanceContainer, maintenances);
       } catch (error) {
         console.error('Error al cargar mantenimientos:', error);
+        maintenanceContainer.innerHTML = `
+          <div class="p-8 text-center">
+            <p class="text-gray-500">Error al cargar mantenimientos: ${error.message}</p>
+            <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="location.reload()">Reintentar</button>
+          </div>
+        `;
         Toast.showError('Error al cargar los mantenimientos');
       }
     };

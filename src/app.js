@@ -128,6 +128,9 @@ export class App {
       case 'maintenance':
         newPage = new MaintenancePage(document.getElementById('page-content'));
         newPage.render();
+        if (this.header) {
+          this.header.setActiveTab(page);
+        }
         return;
       case 'logout':
         this.handleLogout();
