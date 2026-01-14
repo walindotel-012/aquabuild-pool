@@ -1,7 +1,7 @@
 import { Toast } from '../ui/Toast.js';
 import { QuoteService, InvoiceService } from '../../data/firebaseService.js';
 import { DocumentPDF } from './DocumentPDF.js';
-import { formatCurrencyRD, formatDate } from '../../utils/helpers.js';
+import { formatCurrencyRD, formatDate, isMobileDevice, generateWhatsAppURL } from '../../utils/helpers.js';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase.js';
 
@@ -35,7 +35,6 @@ export class DocumentList {
         documents = await InvoiceService.getAll();
       }
       
-      // Ordenar documentos por número ascendente y por fecha ascendente
       documents = this.sortDocuments(documents);
       
       this.currentDocuments = documents;
@@ -73,14 +72,24 @@ export class DocumentList {
   
   sortDocuments(documents) {
     return documents.sort((a, b) => {
-      // Ordenar solo por fecha (descendente - más reciente primero)
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       
       return dateB - dateA;
     });
   }
-  
+
+  shareViaWhatsApp(invoice, fileName) {
+    const waUrl = generateWhatsAppURL(invoice);
+    window.open(waUrl, '_blank');
+    
+    if (isMobileDevice()) {
+      Toast.show('Abre WhatsApp, selecciona un contacto y comparte');
+    } else {
+      Toast.show('Se abrirá WhatsApp Web - selecciona un contacto y envía el PDF');
+    }
+  }
+
   renderDocuments(container, documents) {
     const headers = this.type === 'quote' 
       ? '<th class="text-left">Nº</th><th class="text-left">CLIENTE</th><th class="text-left">FECHA</th><th class="text-right">TOTAL</th><th class="text-center">ESTADO</th><th class="text-right">ACCIONES</th>'
@@ -108,6 +117,10 @@ export class DocumentList {
                 <button class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 transition-colors convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Convertir a factura">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </button>
+                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-quote" data-id="${doc.id}" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.589 14.195 10.616 14.896 11.713 15.385m0 0l-2.08 2.081a5.09 5.09 0 006.519 0l-2.08-2.081m0 0c4.118-2.582 6.614-7.656 3.461-11.407M19.07 4.927l-2.081 2.081m0 0c-4.118 2.582-6.614 7.656-3.461 11.407"/></svg>
+                  Compartir
+                </button>
                 <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-quote" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
@@ -130,6 +143,10 @@ export class DocumentList {
                 <button class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors print-invoice flex items-center gap-1" data-id="${doc.id}" title="Descargar PDF">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                   PDF
+                </button>
+                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-invoice" data-id="${doc.id}" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.589 14.195 10.616 14.896 11.713 15.385m0 0l-2.08 2.081a5.09 5.09 0 006.519 0l-2.08-2.081m0 0c4.118-2.582 6.614-7.656 3.461-11.407M19.07 4.927l-2.081 2.081m0 0c-4.118 2.582-6.614 7.656-3.461 11.407"/></svg>
+                  Compartir
                 </button>
                 <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-invoice" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -161,7 +178,6 @@ export class DocumentList {
     
     container.innerHTML = tableHTML;
     
-    // Event listeners para imprimir
     container.querySelectorAll('.print-quote').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const id = e.target.getAttribute('data-id');
@@ -200,24 +216,22 @@ export class DocumentList {
       });
     });
     
-    // Event listeners para conversión
     container.querySelectorAll('.convert-to-invoice').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const quoteData = JSON.parse(btn.getAttribute('data-quote'));
         try {
           const invoiceData = {
-            clientId: quoteData.clientId,
+            number: 'FAC-' + String(Math.floor(Math.random() * 1000000)).padStart(5, '0'),
             clientName: quoteData.clientName,
-            clientPhone: quoteData.clientPhone,
-            clientAddress: quoteData.clientAddress,
+            clientId: quoteData.clientId,
             date: new Date().toISOString().split('T')[0],
-            items: quoteData.items,
+            items: quoteData.items || [],
             total: quoteData.total,
+            status: 'Pendiente',
             relatedQuoteId: quoteData.id
           };
           
           await InvoiceService.create(invoiceData);
-          // Eliminar la cotización después de convertirla a factura
           await QuoteService.delete(quoteData.id);
           Toast.show('¡Cotización convertida a factura exitosamente!');
           this.onDelete();
@@ -227,11 +241,59 @@ export class DocumentList {
       });
     });
     
-    // Event listeners para editar
     container.querySelectorAll('.edit-quote').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const quoteData = JSON.parse(btn.getAttribute('data-quote'));
         this.onEdit('quote', quoteData);
+      });
+    });
+    
+    container.querySelectorAll('.share-quote').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const id = btn.getAttribute('data-id');
+        const quoteData = JSON.parse(btn.getAttribute('data-quote'));
+        
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="animate-spin inline-block">⏳</span> Cargando...';
+        btn.disabled = true;
+        
+        try {
+          const docRef = doc(db, 'quotes', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const quote = { id: docSnap.id, ...docSnap.data() };
+            const pdf = DocumentPDF.generateQuotePDF(quote);
+            const pdfBlob = pdf.output('blob');
+            const fileName = `cotizacion_${quote.number}.pdf`;
+            
+            const canUseNativeShare = isMobileDevice() && navigator.share && navigator.canShare;
+            
+            if (canUseNativeShare) {
+              const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+              try {
+                await navigator.share({
+                  title: `Cotización #${quote.number}`,
+                  text: `Cotización de ${quote.clientName} - Total: ${formatCurrencyRD(quote.total)}`,
+                  files: [file]
+                });
+                Toast.show('Cotización compartida exitosamente');
+              } catch (error) {
+                if (error.name !== 'AbortError') {
+                  this.shareViaWhatsApp(quote, fileName);
+                }
+              }
+            } else {
+              this.shareViaWhatsApp(quote, fileName);
+            }
+          }
+        } catch (error) {
+          console.error('Error al compartir:', error);
+          Toast.showError('Error al preparar la cotización para compartir');
+        } finally {
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }
       });
     });
     
@@ -242,7 +304,55 @@ export class DocumentList {
       });
     });
     
-    // Event listeners para eliminar
+    container.querySelectorAll('.share-invoice').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const id = btn.getAttribute('data-id');
+        const invoiceData = JSON.parse(btn.getAttribute('data-invoice'));
+        
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="animate-spin inline-block">⏳</span> Cargando...';
+        btn.disabled = true;
+        
+        try {
+          const docRef = doc(db, 'invoices', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const invoice = { id: docSnap.id, ...docSnap.data() };
+            const pdf = DocumentPDF.generateInvoicePDF(invoice);
+            const pdfBlob = pdf.output('blob');
+            const fileName = `factura_${invoice.number}.pdf`;
+            
+            const canUseNativeShare = isMobileDevice() && navigator.share && navigator.canShare;
+            
+            if (canUseNativeShare) {
+              const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+              try {
+                await navigator.share({
+                  title: `Factura #${invoice.number}`,
+                  text: `Factura de ${invoice.clientName} - Total: ${formatCurrencyRD(invoice.total)}`,
+                  files: [file]
+                });
+                Toast.show('Factura compartida exitosamente');
+              } catch (error) {
+                if (error.name !== 'AbortError') {
+                  this.shareViaWhatsApp(invoice, fileName);
+                }
+              }
+            } else {
+              this.shareViaWhatsApp(invoice, fileName);
+            }
+          }
+        } catch (error) {
+          console.error('Error al compartir:', error);
+          Toast.showError('Error al preparar la factura para compartir');
+        } finally {
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }
+      });
+    });
+    
     container.querySelectorAll('.delete-doc').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = e.target.getAttribute('data-id');
@@ -274,7 +384,6 @@ export class DocumentList {
       return clientMatch || numberMatch || totalMatch;
     });
     
-    // Ordenar resultados filtrados
     return this.sortDocuments(filtered);
   }
   

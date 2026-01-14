@@ -6,11 +6,13 @@ export class QuotesPage {
     this.documentForm = new DocumentForm('quote', () => this.refresh());
     this.documentList = null;
     this.isInitialized = false;
+    this.containerElement = null;
   }
   
   render() {
     const container = document.createElement('div');
     container.className = 'space-y-8 pb-8';
+    this.containerElement = container;
     
     const header = document.createElement('div');
     header.className = 'space-y-6';
@@ -29,9 +31,14 @@ export class QuotesPage {
       </div>
       
       <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <label class="block text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wider">Buscar</label>
+        <label class="block text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wider">Filtrar</label>
         <div class="flex flex-col md:flex-row gap-3">
           <input type="text" id="search-quote" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Cliente, número o monto...">
+          <select id="filter-status" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-700 font-medium">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Aprobado">Aprobado</option>
+          </select>
           <div class="flex gap-2 flex-wrap">
             <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">PDF disponibles</button>
             <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">Numeración automática</button>
@@ -46,40 +53,65 @@ export class QuotesPage {
     this.documentList.setOnEditCallback((type, document) => {
       this.documentForm.show(document);
     });
-    container.appendChild(this.documentList.render());
+    const docListElement = this.documentList.render();
+    container.appendChild(docListElement);
     
-    // Configurar eventos solo una vez
-    if (!this.isInitialized) {
-      setTimeout(() => {
-        const newQuoteBtn = document.getElementById('new-quote-btn');
-        if (newQuoteBtn && !newQuoteBtn.hasEventListeners) {
-          newQuoteBtn.addEventListener('click', () => {
-            this.documentForm.show();
-          });
-          newQuoteBtn.hasEventListeners = true;
-        }
-        
-        const searchInput = document.getElementById('search-quote');
-        if (searchInput && !searchInput.hasEventListeners) {
-          searchInput.addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-          });
-          searchInput.hasEventListeners = true;
-        }
-      }, 100);
-      this.isInitialized = true;
-    }
+    // Configurar eventos después de crear el DOM
+    this.setupEventListeners();
     
     return container;
   }
-  
-  handleSearch(searchTerm) {
-    if (this.documentList && this.documentList.currentDocuments) {
-      const filteredDocuments = this.documentList.filterDocuments(searchTerm);
-      const container = document.querySelector('#page-content > div:nth-child(2)');
-      if (container) {
-        this.documentList.renderDocuments(container, filteredDocuments);
-      }
+
+  setupEventListeners() {
+    const newQuoteBtn = this.containerElement?.querySelector('#new-quote-btn');
+    if (newQuoteBtn && !newQuoteBtn.hasEventListeners) {
+      newQuoteBtn.addEventListener('click', () => {
+        this.documentForm.show();
+      });
+      newQuoteBtn.hasEventListeners = true;
+    }
+    
+    const searchInput = this.containerElement?.querySelector('#search-quote');
+    if (searchInput && !searchInput.hasEventListeners) {
+      searchInput.addEventListener('input', () => {
+        this.applyFilters();
+      });
+      searchInput.hasEventListeners = true;
+    }
+
+    const statusFilter = this.containerElement?.querySelector('#filter-status');
+    if (statusFilter && !statusFilter.hasEventListeners) {
+      statusFilter.addEventListener('change', () => {
+        this.applyFilters();
+      });
+      statusFilter.hasEventListeners = true;
+    }
+  }
+
+  applyFilters() {
+    if (!this.documentList || !this.documentList.currentDocuments) {
+      return;
+    }
+
+    const searchTerm = this.containerElement?.querySelector('#search-quote')?.value || '';
+    const statusValue = this.containerElement?.querySelector('#filter-status')?.value || '';
+    
+    let filteredDocuments = [...this.documentList.currentDocuments];
+    
+    // Filtrar por búsqueda de texto
+    if (searchTerm) {
+      filteredDocuments = this.documentList.filterDocuments(searchTerm);
+    }
+    
+    // Filtrar por estado
+    if (statusValue) {
+      filteredDocuments = filteredDocuments.filter(doc => doc.status === statusValue);
+    }
+    
+    // Renderizar tabla filtrada
+    const tableContainer = this.containerElement?.querySelector('.card:nth-child(2)');
+    if (tableContainer) {
+      this.documentList.renderDocuments(tableContainer, filteredDocuments);
     }
   }
   

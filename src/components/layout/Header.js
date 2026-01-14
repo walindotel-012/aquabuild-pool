@@ -15,9 +15,9 @@ export class Header {
         <!-- Logo y nombre -->
         <div class="flex items-center gap-3 cursor-pointer" id="logo-section">
           <div class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
-            <span class="text-sm font-bold text-white">AQ</span>
+            <span class="text-sm font-bold text-white">PD</span>
           </div>
-          <h1 class="text-lg font-semibold text-gray-900">AquaBuild Suite</h1>
+          <h1 class="text-lg font-semibold text-gray-900">Piscinas Durán</h1>
         </div>
 
         <!-- Navegación horizontal (visible en desktop) -->
