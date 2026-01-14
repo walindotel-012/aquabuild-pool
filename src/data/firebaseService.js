@@ -263,3 +263,109 @@ async update(id, invoiceData) {
     }
   }
 };
+
+// Cobro de Mantenimientos
+export const MaintenanceService = {
+  async getAll() {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'maintenance'));
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error al obtener mantenimientos:', error);
+      throw new Error('No se pudieron cargar los mantenimientos');
+    }
+  },
+
+  async getByMonth(year, month) {
+    try {
+      const allMaintenance = await this.getAll();
+      return allMaintenance.filter(m => {
+        const mDate = new Date(m.date);
+        return mDate.getFullYear() === year && mDate.getMonth() === month;
+      });
+    } catch (error) {
+      console.error('Error al obtener mantenimientos por mes:', error);
+      throw new Error('No se pudieron cargar los mantenimientos');
+    }
+  },
+
+  async create(maintenanceData) {
+    try {
+      if (!maintenanceData.clientName) {
+        throw new Error('Nombre del cliente es requerido');
+      }
+
+      const maintenances = await this.getAll();
+      const lastMaintenance = maintenances
+        .filter(m => m.number && m.number.startsWith('MAN-'))
+        .sort((a, b) => {
+          const numA = parseInt(a.number.replace('MAN-', '')) || 0;
+          const numB = parseInt(b.number.replace('MAN-', '')) || 0;
+          return numB - numA;
+        })[0];
+
+      let nextNumber;
+      if (lastMaintenance) {
+        const lastNum = parseInt(lastMaintenance.number.replace('MAN-', '')) || 20099;
+        nextNumber = lastNum + 1;
+      } else {
+        nextNumber = 20100;
+      }
+
+      const nextNumberStr = `MAN-${nextNumber}`;
+
+      const numberExists = maintenances.some(m => m.number === nextNumberStr);
+      if (numberExists) {
+        throw new Error(`El número de mantenimiento ${nextNumberStr} ya existe. Por favor intente nuevamente.`);
+      }
+
+      const maintenanceWithNumber = {
+        clientId: maintenanceData.clientId || '',
+        clientName: maintenanceData.clientName,
+        clientPhone: maintenanceData.clientPhone || '',
+        clientAddress: maintenanceData.clientAddress || '',
+        date: maintenanceData.date,
+        serviceDescription: maintenanceData.serviceDescription || 'Servicio de Mantenimiento',
+        amount: maintenanceData.amount,
+        number: nextNumberStr,
+        status: 'Pendiente',
+        createdAt: new Date().toISOString()
+      };
+
+      const docRef = await addDoc(collection(db, 'maintenance'), maintenanceWithNumber);
+      return { id: docRef.id, ...maintenanceWithNumber };
+    } catch (error) {
+      console.error('Error al crear mantenimiento:', error);
+      throw new Error('Error al crear el mantenimiento: ' + error.message);
+    }
+  },
+
+  async update(id, maintenanceData) {
+    try {
+      if (!maintenanceData.clientName) {
+        throw new Error('Nombre del cliente es requerido');
+      }
+
+      const updatedMaintenance = {
+        ...maintenanceData,
+        updatedAt: new Date().toISOString()
+      };
+
+      const docRef = doc(db, 'maintenance', id);
+      await updateDoc(docRef, updatedMaintenance);
+      return { id, ...updatedMaintenance };
+    } catch (error) {
+      console.error('Error al actualizar mantenimiento:', error);
+      throw new Error('Error al actualizar el mantenimiento: ' + error.message);
+    }
+  },
+
+  async delete(id) {
+    try {
+      await deleteDoc(doc(db, 'maintenance', id));
+    } catch (error) {
+      console.error('Error al eliminar mantenimiento:', error);
+      throw new Error('Error al eliminar el mantenimiento: ' + error.message);
+    }
+  }
+};

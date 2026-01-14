@@ -3,6 +3,7 @@ import { Dashboard } from './pages/Dashboard.js';
 import { ClientsPage } from './pages/ClientsPage.js';
 import { QuotesPage } from './pages/QuotesPage.js';
 import { InvoicesPage } from './pages/InvoicesPage.js';
+import { MaintenancePage } from './pages/MaintenancePage.js';
 import { AuthForm } from './components/auth/AuthForm.js';
 import { auth } from './firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -124,6 +125,10 @@ export class App {
       case 'invoices':
         newPage = new InvoicesPage();
         break;
+      case 'maintenance':
+        newPage = new MaintenancePage(document.getElementById('page-content'));
+        newPage.render();
+        return;
       case 'logout':
         this.handleLogout();
         return;
