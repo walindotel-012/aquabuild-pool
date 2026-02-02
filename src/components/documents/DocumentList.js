@@ -102,7 +102,7 @@ export class DocumentList {
       if (this.type === 'quote') {
         const statusClass = doc.status === 'Pendiente' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800';
         return `
-          <tr class="${bgClass} border-b border-gray-100 hover:bg-gray-50 transition-colors">
+          <tr class="${bgClass} border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer row-selectable" data-row-id="row-${doc.id}">
             <td class="px-6 py-4 font-mono text-sm text-gray-700">${doc.number}</td>
             <td class="px-6 py-4 text-sm font-medium text-gray-900">${doc.clientName}</td>
             <td class="px-6 py-4 text-sm text-gray-600">${formatDate(doc.date)}</td>
@@ -117,9 +117,9 @@ export class DocumentList {
                 <button class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 transition-colors convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Convertir a factura">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </button>
-                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-quote" data-id="${doc.id}" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.589 14.195 10.616 14.896 11.713 15.385m0 0l-2.08 2.081a5.09 5.09 0 006.519 0l-2.08-2.081m0 0c4.118-2.582 6.614-7.656 3.461-11.407M19.07 4.927l-2.081 2.081m0 0c-4.118 2.582-6.614 7.656-3.461 11.407"/></svg>
-                  Compartir
+                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-quote flex items-center gap-1" data-id="${doc.id}" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                  Whatsapp
                 </button>
                 <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-quote" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -133,7 +133,7 @@ export class DocumentList {
         `;
       } else {
         return `
-          <tr class="${bgClass} border-b border-gray-100 hover:bg-gray-50 transition-colors">
+          <tr class="${bgClass} border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer row-selectable" data-row-id="row-${doc.id}">
             <td class="px-6 py-4 font-mono text-sm text-gray-700">${doc.number}</td>
             <td class="px-6 py-4 text-sm font-medium text-gray-900">${doc.clientName}</td>
             <td class="px-6 py-4 text-sm text-gray-600">${formatDate(doc.date)}</td>
@@ -144,9 +144,9 @@ export class DocumentList {
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                   PDF
                 </button>
-                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-invoice" data-id="${doc.id}" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.589 14.195 10.616 14.896 11.713 15.385m0 0l-2.08 2.081a5.09 5.09 0 006.519 0l-2.08-2.081m0 0c4.118-2.582 6.614-7.656 3.461-11.407M19.07 4.927l-2.081 2.081m0 0c-4.118 2.582-6.614 7.656-3.461 11.407"/></svg>
-                  Compartir
+                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-invoice flex items-center gap-1" data-id="${doc.id}" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                  Whatsapp
                 </button>
                 <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-invoice" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -363,6 +363,22 @@ export class DocumentList {
         if (confirm(confirmMsg)) {
           this.handleDelete(id);
         }
+      });
+    });
+
+    // Agregar event listeners para el focus en las filas
+    container.querySelectorAll('.row-selectable').forEach(row => {
+      row.addEventListener('click', (e) => {
+        // Solo hacer focus si no se clickea un botón
+        if (e.target.closest('button')) return;
+        
+        // Remover el focus de todas las filas
+        container.querySelectorAll('.row-selectable').forEach(r => {
+          r.classList.remove('bg-blue-100', 'border-blue-400', 'border-l-4');
+        });
+        
+        // Agregar el focus a la fila clickeada
+        row.classList.add('bg-blue-100', 'border-blue-400', 'border-l-4');
       });
     });
   }
