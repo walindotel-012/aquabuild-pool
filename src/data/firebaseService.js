@@ -264,108 +264,250 @@ async update(id, invoiceData) {
   }
 };
 
-// Cobro de Mantenimientos
-export const MaintenanceService = {
+// Servicios de Mantenimiento
+export const MaintenanceAssignmentService = {
   async getAll() {
     try {
-      const querySnapshot = await getDocs(collection(db, 'maintenance'));
+      const querySnapshot = await getDocs(collection(db, 'maintenanceAssignments'));
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-      console.error('Error al obtener mantenimientos:', error);
-      throw new Error('No se pudieron cargar los mantenimientos');
+      console.error('Error al obtener asignaciones de mantenimiento:', error);
+      throw new Error('No se pudieron cargar las asignaciones de mantenimiento');
     }
   },
 
-  async getByMonth(year, month) {
+  async getByClientId(clientId) {
     try {
-      const allMaintenance = await this.getAll();
-      return allMaintenance.filter(m => {
-        const mDate = new Date(m.date);
-        return mDate.getFullYear() === year && mDate.getMonth() === month;
-      });
+      const all = await this.getAll();
+      return all.filter(assignment => assignment.clientId === clientId);
     } catch (error) {
-      console.error('Error al obtener mantenimientos por mes:', error);
-      throw new Error('No se pudieron cargar los mantenimientos');
+      console.error('Error al obtener asignaciones por cliente:', error);
+      throw new Error('No se pudieron cargar las asignaciones');
     }
   },
 
-  async create(maintenanceData) {
+  async create(assignmentData) {
     try {
-      if (!maintenanceData.clientName) {
-        throw new Error('Nombre del cliente es requerido');
+      if (!assignmentData.clientId || !assignmentData.clientName) {
+        throw new Error('Cliente es requerido');
+      }
+      if (!assignmentData.serviceName || !assignmentData.amount) {
+        throw new Error('Nombre del servicio y monto son requeridos');
       }
 
-      const maintenances = await this.getAll();
-      const lastMaintenance = maintenances
-        .filter(m => m.number && m.number.startsWith('MAN-'))
-        .sort((a, b) => {
-          const numA = parseInt(a.number.replace('MAN-', '')) || 0;
-          const numB = parseInt(b.number.replace('MAN-', '')) || 0;
-          return numB - numA;
-        })[0];
-
-      let nextNumber;
-      if (lastMaintenance) {
-        const lastNum = parseInt(lastMaintenance.number.replace('MAN-', '')) || 20099;
-        nextNumber = lastNum + 1;
-      } else {
-        nextNumber = 20100;
-      }
-
-      const nextNumberStr = `MAN-${nextNumber}`;
-
-      const numberExists = maintenances.some(m => m.number === nextNumberStr);
-      if (numberExists) {
-        throw new Error(`El número de mantenimiento ${nextNumberStr} ya existe. Por favor intente nuevamente.`);
-      }
-
-      const maintenanceWithNumber = {
-        clientId: maintenanceData.clientId || '',
-        clientName: maintenanceData.clientName,
-        clientPhone: maintenanceData.clientPhone || '',
-        clientAddress: maintenanceData.clientAddress || '',
-        date: maintenanceData.date,
-        serviceDescription: maintenanceData.serviceDescription || 'Servicio de Mantenimiento',
-        amount: maintenanceData.amount,
-        number: nextNumberStr,
-        status: 'Pendiente',
+      const assignment = {
+        clientId: assignmentData.clientId,
+        clientName: assignmentData.clientName,
+        clientPhone: assignmentData.clientPhone || '',
+        clientAddress: assignmentData.clientAddress || '',
+        serviceName: assignmentData.serviceName,
+        description: assignmentData.description || '',
+        amount: parseFloat(assignmentData.amount),
+        frequency: assignmentData.frequency || 'monthly', // monthly, quarterly, annual
+        startDate: assignmentData.startDate,
+        isActive: true,
         createdAt: new Date().toISOString()
       };
 
-      const docRef = await addDoc(collection(db, 'maintenance'), maintenanceWithNumber);
-      return { id: docRef.id, ...maintenanceWithNumber };
+      const docRef = await addDoc(collection(db, 'maintenanceAssignments'), assignment);
+      return { id: docRef.id, ...assignment };
     } catch (error) {
-      console.error('Error al crear mantenimiento:', error);
-      throw new Error('Error al crear el mantenimiento: ' + error.message);
+      console.error('Error al crear asignación de mantenimiento:', error);
+      throw new Error('Error al crear la asignación: ' + error.message);
     }
   },
 
-  async update(id, maintenanceData) {
+  async update(id, assignmentData) {
     try {
-      if (!maintenanceData.clientName) {
-        throw new Error('Nombre del cliente es requerido');
-      }
-
-      const updatedMaintenance = {
-        ...maintenanceData,
+      const docRef = doc(db, 'maintenanceAssignments', id);
+      const updateData = {
+        ...assignmentData,
         updatedAt: new Date().toISOString()
       };
-
-      const docRef = doc(db, 'maintenance', id);
-      await updateDoc(docRef, updatedMaintenance);
-      return { id, ...updatedMaintenance };
+      await updateDoc(docRef, updateData);
+      return { id, ...updateData };
     } catch (error) {
-      console.error('Error al actualizar mantenimiento:', error);
-      throw new Error('Error al actualizar el mantenimiento: ' + error.message);
+      console.error('Error al actualizar asignación:', error);
+      throw new Error('Error al actualizar la asignación: ' + error.message);
     }
   },
 
   async delete(id) {
     try {
-      await deleteDoc(doc(db, 'maintenance', id));
+      await deleteDoc(doc(db, 'maintenanceAssignments', id));
     } catch (error) {
-      console.error('Error al eliminar mantenimiento:', error);
-      throw new Error('Error al eliminar el mantenimiento: ' + error.message);
+      console.error('Error al eliminar asignación:', error);
+      throw new Error('Error al eliminar la asignación: ' + error.message);
+    }
+  }
+};
+
+// Facturas de Mantenimiento
+export const MaintenanceInvoiceService = {
+  async getAll() {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'maintenanceInvoices'));
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error al obtener facturas de mantenimiento:', error);
+      throw new Error('No se pudieron cargar las facturas de mantenimiento');
+    }
+  },
+
+  async getByMonth(year, month) {
+    try {
+      const all = await this.getAll();
+      return all.filter(invoice => {
+        const invoiceDate = new Date(invoice.generatedDate);
+        return invoiceDate.getFullYear() === year && invoiceDate.getMonth() === month;
+      });
+    } catch (error) {
+      console.error('Error al obtener facturas por mes:', error);
+      throw new Error('No se pudieron cargar las facturas del mes');
+    }
+  },
+
+  async getByClientIdAndMonth(clientId, year, month) {
+    try {
+      const all = await this.getAll();
+      return all.filter(invoice => {
+        const invoiceDate = new Date(invoice.generatedDate);
+        return (
+          invoice.clientId === clientId &&
+          invoiceDate.getFullYear() === year &&
+          invoiceDate.getMonth() === month
+        );
+      });
+    } catch (error) {
+      console.error('Error al obtener facturas del cliente:', error);
+      throw new Error('No se pudieron cargar las facturas');
+    }
+  },
+
+  async create(invoiceData) {
+    try {
+      if (!invoiceData.clientId || !invoiceData.clientName) {
+        throw new Error('Cliente es requerido');
+      }
+
+      const invoices = await this.getAll();
+      const lastInvoice = invoices
+        .filter(i => i.number && i.number.startsWith('MTN-'))
+        .sort((a, b) => {
+          const numA = parseInt(a.number.replace('MTN-', '')) || 0;
+          const numB = parseInt(b.number.replace('MTN-', '')) || 0;
+          return numB - numA;
+        })[0];
+
+      let nextNumber;
+      if (lastInvoice) {
+        const lastNum = parseInt(lastInvoice.number.replace('MTN-', '')) || 30099;
+        nextNumber = lastNum + 1;
+      } else {
+        nextNumber = 30100;
+      }
+
+      const nextNumberStr = `MTN-${nextNumber}`;
+
+      const invoice = {
+        clientId: invoiceData.clientId,
+        clientName: invoiceData.clientName,
+        clientPhone: invoiceData.clientPhone || '',
+        clientAddress: invoiceData.clientAddress || '',
+        assignmentId: invoiceData.assignmentId,
+        serviceName: invoiceData.serviceName,
+        amount: parseFloat(invoiceData.amount),
+        number: nextNumberStr,
+        generatedDate: invoiceData.generatedDate || new Date().toISOString(),
+        dueDate: invoiceData.dueDate,
+        isPaid: false,
+        createdAt: new Date().toISOString()
+      };
+
+      const docRef = await addDoc(collection(db, 'maintenanceInvoices'), invoice);
+      return { id: docRef.id, ...invoice };
+    } catch (error) {
+      console.error('Error al crear factura de mantenimiento:', error);
+      throw new Error('Error al crear la factura: ' + error.message);
+    }
+  },
+
+  async update(id, invoiceData) {
+    try {
+      const docRef = doc(db, 'maintenanceInvoices', id);
+      const updateData = {
+        ...invoiceData,
+        updatedAt: new Date().toISOString()
+      };
+      await updateDoc(docRef, updateData);
+      return { id, ...updateData };
+    } catch (error) {
+      console.error('Error al actualizar factura:', error);
+      throw new Error('Error al actualizar la factura: ' + error.message);
+    }
+  },
+
+  async delete(id) {
+    try {
+      await deleteDoc(doc(db, 'maintenanceInvoices', id));
+    } catch (error) {
+      console.error('Error al eliminar factura:', error);
+      throw new Error('Error al eliminar la factura: ' + error.message);
+    }
+  },
+
+  /**
+   * Genera automáticamente facturas para todas las asignaciones activas
+   * de acuerdo a su frecuencia
+   */
+  async generateMonthlyInvoices() {
+    try {
+      const assignments = await MaintenanceAssignmentService.getAll();
+      const now = new Date();
+      const generatedInvoices = [];
+
+      for (const assignment of assignments) {
+        if (!assignment.isActive) continue;
+
+        const startDate = new Date(assignment.startDate);
+        if (startDate > now) continue;
+
+        // Verificar si ya existe factura para este mes
+        const existingInvoices = await this.getByClientIdAndMonth(
+          assignment.clientId,
+          now.getFullYear(),
+          now.getMonth()
+        );
+
+        // Filtrar por assignmentId para evitar duplicados
+        const alreadyGenerated = existingInvoices.some(
+          inv => inv.assignmentId === assignment.id
+        );
+
+        if (!alreadyGenerated && assignment.frequency === 'monthly') {
+          // Crear factura
+          const dueDate = new Date(now);
+          dueDate.setDate(dueDate.getDate() + 15);
+
+          await this.create({
+            clientId: assignment.clientId,
+            clientName: assignment.clientName,
+            clientPhone: assignment.clientPhone,
+            clientAddress: assignment.clientAddress,
+            assignmentId: assignment.id,
+            serviceName: assignment.serviceName,
+            amount: assignment.amount,
+            dueDate: dueDate.toISOString()
+          });
+
+          generatedInvoices.push(assignment.id);
+        }
+      }
+
+      return generatedInvoices;
+    } catch (error) {
+      console.error('Error al generar facturas mensuales:', error);
+      throw new Error('Error al generar facturas: ' + error.message);
     }
   }
 };

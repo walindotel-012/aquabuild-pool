@@ -75,3 +75,20 @@ export const generateWhatsAppURL = (invoice, phone = null) => {
     return `https://wa.me/?text=${text}`;
   }
 };
+
+/**
+ * Genera URL de WhatsApp con mensaje personalizado
+ * @param {string} phone - Número de teléfono
+ * @param {string} message - Mensaje a enviar
+ * @returns {string}
+ */
+export const generateWhatsAppMessageURL = (phone, message) => {
+  if (!phone) {
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  }
+  
+  // Limpiar el número de teléfono (remover espacios, guiones, etc.)
+  const cleanedPhone = phone.replace(/\D/g, '');
+  
+  return `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`;
+};

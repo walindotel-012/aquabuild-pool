@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard.js';
 import { ClientsPage } from './pages/ClientsPage.js';
 import { QuotesPage } from './pages/QuotesPage.js';
 import { InvoicesPage } from './pages/InvoicesPage.js';
+import { MaintenancePage } from './pages/MaintenancePage.js';
 import { AuthForm } from './components/auth/AuthForm.js';
 import { auth, firebaseInitialized } from './firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -105,18 +106,44 @@ export class App {
 
     let newPage;
     switch (page) {
-      case 'dashboard': newPage = new Dashboard(this.currentUser); break;
-      case 'clients': newPage = new ClientsPage(); break;
-      case 'quotes': newPage = new QuotesPage(); break;
-      case 'invoices': newPage = new InvoicesPage(); break;
-      case 'logout': this.handleLogout(); return;
-      default: newPage = new Dashboard(this.currentUser); window.location.hash = 'dashboard';
+      case 'dashboard': 
+        newPage = new Dashboard(this.currentUser); 
+        break;
+      case 'clients': 
+        newPage = new ClientsPage(); 
+        break;
+      case 'quotes': 
+        newPage = new QuotesPage(); 
+        break;
+      case 'invoices': 
+        newPage = new InvoicesPage(); 
+        break;
+      case 'maintenance':
+        newPage = new MaintenancePage();
+        break;
+      case 'logout': 
+        this.handleLogout(); 
+        return;
+      default: 
+        newPage = new Dashboard(this.currentUser); 
+        window.location.hash = 'dashboard';
     }
 
     this.currentPage = newPage;
     const content = document.getElementById('page-content');
     content.innerHTML = '';
-    content.appendChild(newPage.render());
+    
+    // Esperar a que render() resuelva la promesa si es necesario
+    const rendered = newPage.render();
+    if (rendered instanceof Promise) {
+      rendered.then(element => {
+        content.appendChild(element);
+      }).catch(error => {
+        console.error('Error al renderizar página:', error);
+      });
+    } else {
+      content.appendChild(rendered);
+    }
 
     if (this.header) this.header.setActiveTab(page);
   }
