@@ -109,23 +109,26 @@ export class DocumentList {
             <td class="px-6 py-4 text-sm font-semibold text-right text-gray-900">${totalFormatted}</td>
             <td class="px-6 py-4 text-center"><span class="px-3 py-1 rounded text-xs font-semibold ${statusClass}">${doc.status}</span></td>
             <td class="px-6 py-4 text-right">
-              <div class="flex flex-wrap justify-end items-center gap-2">
-                <button class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors print-quote flex items-center gap-1" data-id="${doc.id}" title="Descargar PDF">
+              <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 items-center sm:justify-end">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors print-quote flex items-center justify-center sm:justify-start gap-1" data-id="${doc.id}" title="Descargar PDF">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                  PDF
+                  <span>PDF</span>
                 </button>
-                <button class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 transition-colors convert-to-invoice" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Convertir a factura">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 transition-colors convert-to-invoice flex items-center justify-center gap-1" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Convertir a factura">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span>Convertir</span>
                 </button>
-                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-quote flex items-center gap-1" data-id="${doc.id}" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                  Whatsapp
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors share-quote flex items-center justify-center gap-1" data-id="${doc.id}" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421-7.403h-.004a9.87 9.87 0 00-4.94 1.312c-1.532.821-2.856 2.088-3.821 3.637-2.364 3.905-1.956 9.46 1.005 12.702 3.002 3.264 7.953 4.209 12.102 2.105 1.913-1.01 3.497-2.51 4.647-4.27 2.403-3.905 1.996-9.46-1.005-12.702-1.501-1.635-3.374-2.795-5.439-3.341-.626-.15-1.272-.226-1.945-.226zm8.487-1.233c-1.494 0-2.707-1.214-2.707-2.712 0-1.498 1.213-2.712 2.707-2.712 1.494 0 2.707 1.214 2.707 2.712 0 1.498-1.213 2.712-2.707 2.712z"/></svg>
+                  <span>Whatsapp</span>
                 </button>
-                <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-quote" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-quote flex items-center justify-center gap-1" data-quote='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <span>Editar</span>
                 </button>
-                <button class="px-3 py-1.5 bg-red-300 text-red-800 rounded-lg text-xs font-semibold hover:bg-red-400 transition-colors delete-doc" data-id="${doc.id}" title="Eliminar">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-red-300 text-red-800 rounded-lg text-xs font-semibold hover:bg-red-400 transition-colors delete-doc flex items-center justify-center gap-1" data-id="${doc.id}" title="Eliminar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  <span>Eliminar</span>
                 </button>
               </div>
             </td>
@@ -139,20 +142,22 @@ export class DocumentList {
             <td class="px-6 py-4 text-sm text-gray-600">${formatDate(doc.date)}</td>
             <td class="px-6 py-4 text-sm font-semibold text-right text-gray-900">${totalFormatted}</td>
             <td class="px-6 py-4 text-right">
-              <div class="flex flex-wrap justify-end items-center gap-2">
-                <button class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors print-invoice flex items-center gap-1" data-id="${doc.id}" title="Descargar PDF">
+              <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 items-center sm:justify-end">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors print-invoice flex items-center justify-center sm:justify-start gap-1" data-id="${doc.id}" title="Descargar PDF">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                  PDF
+                  <span>PDF</span>
                 </button>
-                <button class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors share-invoice flex items-center gap-1" data-id="${doc.id}" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                  Whatsapp
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors share-invoice flex items-center justify-center gap-1" data-id="${doc.id}" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Compartir por WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421-7.403h-.004a9.87 9.87 0 00-4.94 1.312c-1.532.821-2.856 2.088-3.821 3.637-2.364 3.905-1.956 9.46 1.005 12.702 3.002 3.264 7.953 4.209 12.102 2.105 1.913-1.01 3.497-2.51 4.647-4.27 2.403-3.905 1.996-9.46-1.005-12.702-1.501-1.635-3.374-2.795-5.439-3.341-.626-.15-1.272-.226-1.945-.226zm8.487-1.233c-1.494 0-2.707-1.214-2.707-2.712 0-1.498 1.213-2.712 2.707-2.712 1.494 0 2.707 1.214 2.707 2.712 0 1.498-1.213 2.712-2.707 2.712z"/></svg>
+                  <span>Whatsapp</span>
                 </button>
-                <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-invoice" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors edit-invoice flex items-center justify-center gap-1" data-invoice='${JSON.stringify(doc).replace(/'/g, "\\'")}' title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <span>Editar</span>
                 </button>
-                <button class="px-3 py-1.5 bg-red-300 text-red-800 rounded-lg text-xs font-semibold hover:bg-red-400 transition-colors delete-doc" data-id="${doc.id}" title="Eliminar">
+                <button class="w-full sm:w-auto px-3 py-1.5 bg-red-300 text-red-800 rounded-lg text-xs font-semibold hover:bg-red-400 transition-colors delete-doc flex items-center justify-center gap-1" data-id="${doc.id}" title="Eliminar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  <span>Eliminar</span>
                 </button>
               </div>
             </td>
