@@ -1,6 +1,7 @@
 import { ClientService } from '../data/firebaseService.js';
 import { QuoteService } from '../data/firebaseService.js';
 import { InvoiceService } from '../data/firebaseService.js';
+import { MaintenanceInvoiceService, MaintenanceAssignmentService } from '../data/firebaseService.js';
 
 export class Dashboard {
   constructor(currentUser = null) {
@@ -34,7 +35,7 @@ export class Dashboard {
       </div>
 
       <!-- Tarjetas de resumen (cargando) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="rounded-2xl p-6 bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" id="clients-card">
           <div class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-4"></div>
@@ -48,6 +49,12 @@ export class Dashboard {
           </div>
         </div>
         <div class="rounded-2xl p-6 bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" id="invoices-card">
+          <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-4"></div>
+            <p class="text-white/70">Cargando...</p>
+          </div>
+        </div>
+        <div class="rounded-2xl p-6 bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" id="maintenance-card">
           <div class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-4"></div>
             <p class="text-white/70">Cargando...</p>
@@ -71,10 +78,12 @@ export class Dashboard {
   async loadStats(container) {
     try {
       // Cargar estadísticas en paralelo
-      const [clients, quotes, invoices] = await Promise.all([
+      const [clients, quotes, invoices, maintenanceAssignments, maintenanceInvoices] = await Promise.all([
         ClientService.getAll(),
         QuoteService.getAll(),
-        InvoiceService.getAll()
+        InvoiceService.getAll(),
+        MaintenanceAssignmentService.getAll(),
+        MaintenanceInvoiceService.getAll()
       ]);
       
       // Obtener el nombre del usuario
@@ -92,6 +101,8 @@ export class Dashboard {
         clients: clients.length,
         quotes: quotes.length,
         invoices: invoices.length,
+        maintenanceAssignments: maintenanceAssignments.length,
+        maintenanceInvoices: maintenanceInvoices.length,
         displayName: displayName
       };
       
@@ -130,7 +141,7 @@ export class Dashboard {
       </div>
 
       <!-- Tarjetas de resumen -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Tarjeta de Clientes -->
         <div class="rounded-2xl p-6 bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" id="clients-card">
           <div class="text-center">
@@ -172,6 +183,21 @@ export class Dashboard {
             <p class="text-white/70 text-sm">Facturas emitidas</p>
           </div>
         </div>
+
+        <!-- Tarjeta de Mantenimiento -->
+        <div class="rounded-2xl p-6 bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" id="maintenance-card">
+          <div class="text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-white/80 text-sm font-semibold mb-2 uppercase tracking-wider">Mantenimientos</h3>
+            <p class="text-4xl font-bold text-white mb-2">${stats.maintenanceAssignments}</p>
+            <p class="text-white/70 text-sm">${stats.maintenanceInvoices} factura(s)</p>
+          </div>
+        </div>
       </div>
       
       <!-- Sección de bienvenida -->
@@ -207,6 +233,7 @@ export class Dashboard {
     const clientsCard = container.querySelector('#clients-card');
     const quotesCard = container.querySelector('#quotes-card');
     const invoicesCard = container.querySelector('#invoices-card');
+    const maintenanceCard = container.querySelector('#maintenance-card');
     
     if (clientsCard) {
       clientsCard.addEventListener('click', () => {
@@ -223,6 +250,12 @@ export class Dashboard {
     if (invoicesCard) {
       invoicesCard.addEventListener('click', () => {
         window.location.hash = 'invoices';
+      });
+    }
+
+    if (maintenanceCard) {
+      maintenanceCard.addEventListener('click', () => {
+        window.location.hash = 'maintenance';
       });
     }
   }
