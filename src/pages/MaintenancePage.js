@@ -5,11 +5,11 @@ import { DocumentPDF } from '../components/documents/DocumentPDF.js';
 import { MaintenanceAssignmentForm } from '../components/maintenance/MaintenanceAssignmentForm.js';
 
 export class MaintenancePage {
-  constructor(onRefreshCallback) {
-    this.onRefreshCallback = onRefreshCallback;
+  constructor() {
     this.currentMonth = new Date();
     this.invoices = [];
     this.assignments = [];
+    this.invoicesSection = null;
   }
 
   async render() {
@@ -69,6 +69,7 @@ export class MaintenancePage {
     const invoicesSection = document.createElement('div');
     invoicesSection.id = 'invoices-section';
     invoicesSection.className = 'hidden space-y-6';
+    this.invoicesSection = invoicesSection;
 
     const filterDiv = document.createElement('div');
     filterDiv.className = 'bg-white rounded-xl p-6 border border-gray-100 shadow-sm';
@@ -458,22 +459,31 @@ export class MaintenancePage {
     const prevBtn = container.querySelector('#prev-month');
     const nextBtn = container.querySelector('#next-month');
 
+    const updateInvoicesList = async () => {
+      await this.loadInvoices();
+      const oldInvoicesList = this.invoicesSection?.querySelector('#invoices-list');
+      if (oldInvoicesList) {
+        const newInvoicesList = await this.renderInvoices();
+        oldInvoicesList.replaceWith(newInvoicesList);
+      }
+    };
+
     monthInput?.addEventListener('change', (e) => {
       const [year, month] = e.target.value.split('-');
       this.currentMonth = new Date(parseInt(year), parseInt(month) - 1);
-      if (this.onRefreshCallback) this.onRefreshCallback();
+      updateInvoicesList();
     });
 
     prevBtn?.addEventListener('click', () => {
       this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);
       monthInput.value = `${this.currentMonth.getFullYear()}-${String(this.currentMonth.getMonth() + 1).padStart(2, '0')}`;
-      if (this.onRefreshCallback) this.onRefreshCallback();
+      updateInvoicesList();
     });
 
     nextBtn?.addEventListener('click', () => {
       this.currentMonth.setMonth(this.currentMonth.getMonth() + 1);
       monthInput.value = `${this.currentMonth.getFullYear()}-${String(this.currentMonth.getMonth() + 1).padStart(2, '0')}`;
-      if (this.onRefreshCallback) this.onRefreshCallback();
+      updateInvoicesList();
     });
   }
 
@@ -490,7 +500,13 @@ export class MaintenancePage {
           Toast.show(`${generated.length} factura(s) generada(s)`);
           // Reload invoices list in real-time without page refresh
           await this.loadInvoices();
-          this.renderInvoices(container);
+          
+          // Find and replace the invoices list container
+          const oldInvoicesList = this.invoicesSection?.querySelector('#invoices-list');
+          if (oldInvoicesList) {
+            const newInvoicesList = await this.renderInvoices();
+            oldInvoicesList.replaceWith(newInvoicesList);
+          }
         } else {
           Toast.show('No hay nuevas asignaciones');
         }

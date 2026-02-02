@@ -13,8 +13,9 @@ export class App {
   constructor() {
     this.currentPage = null;
     this.currentUser = null;
-    this.checkAuth();
+    // Setup listener ANTES de checkAuth para que esté listo
     window.addEventListener('hashchange', () => this.handleHashChange());
+    this.checkAuth();
   }
 
   checkAuth() {
@@ -102,47 +103,75 @@ export class App {
   }
 
   navigate(page) {
-    if (window.location.hash.replace('#', '') !== page) window.location.hash = page;
-
-    let newPage;
-    switch (page) {
-      case 'dashboard': 
-        newPage = new Dashboard(this.currentUser); 
-        break;
-      case 'clients': 
-        newPage = new ClientsPage(); 
-        break;
-      case 'quotes': 
-        newPage = new QuotesPage(); 
-        break;
-      case 'invoices': 
-        newPage = new InvoicesPage(); 
-        break;
-      case 'maintenance':
-        newPage = new MaintenancePage();
-        break;
-      case 'logout': 
-        this.handleLogout(); 
-        return;
-      default: 
-        newPage = new Dashboard(this.currentUser); 
-        window.location.hash = 'dashboard';
+    // Si el hash no coincide con la página, actualizar y esperar al hashchange
+    if (window.location.hash.replace('#', '') !== page) {
+      window.location.hash = page;
+      return; // El hashchange listener disparará navigate() nuevamente
     }
 
-    this.currentPage = newPage;
-    const content = document.getElementById('page-content');
-    content.innerHTML = '';
-    
-    // Esperar a que render() resuelva la promesa si es necesario
-    const rendered = newPage.render();
-    if (rendered instanceof Promise) {
-      rendered.then(element => {
-        content.appendChild(element);
-      }).catch(error => {
-        console.error('Error al renderizar página:', error);
-      });
-    } else {
-      content.appendChild(rendered);
+    let newPage;
+    let shouldRender = false;
+
+    // Verificar si es la misma página para evitar recrearla
+    switch (page) {
+      case 'dashboard':
+        if (!(this.currentPage instanceof Dashboard)) {
+          newPage = new Dashboard(this.currentUser);
+          shouldRender = true;
+        }
+        break;
+      case 'clients':
+        if (!(this.currentPage instanceof ClientsPage)) {
+          newPage = new ClientsPage();
+          shouldRender = true;
+        }
+        break;
+      case 'quotes':
+        if (!(this.currentPage instanceof QuotesPage)) {
+          newPage = new QuotesPage();
+          shouldRender = true;
+        }
+        break;
+      case 'invoices':
+        if (!(this.currentPage instanceof InvoicesPage)) {
+          newPage = new InvoicesPage();
+          shouldRender = true;
+        }
+        break;
+      case 'maintenance':
+        if (!(this.currentPage instanceof MaintenancePage)) {
+          newPage = new MaintenancePage();
+          shouldRender = true;
+        }
+        break;
+      case 'logout':
+        this.handleLogout();
+        return;
+      default:
+        if (!(this.currentPage instanceof Dashboard)) {
+          newPage = new Dashboard(this.currentUser);
+          shouldRender = true;
+          window.location.hash = 'dashboard';
+        }
+    }
+
+    // Solo renderizar si se creó una nueva página
+    if (shouldRender && newPage) {
+      this.currentPage = newPage;
+      const content = document.getElementById('page-content');
+      if (content) {
+        content.innerHTML = '';
+        const rendered = newPage.render();
+        if (rendered instanceof Promise) {
+          rendered.then(element => {
+            content.appendChild(element);
+          }).catch(error => {
+            console.error('Error al renderizar página:', error);
+          });
+        } else {
+          content.appendChild(rendered);
+        }
+      }
     }
 
     if (this.header) this.header.setActiveTab(page);
