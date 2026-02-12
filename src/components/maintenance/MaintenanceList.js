@@ -285,14 +285,14 @@ Por favor realiza el pago en el plazo indicado.
 
     monthInput?.addEventListener('change', (e) => {
       const [year, month] = e.target.value.split('-');
-      this.currentMonth = new Date(parseInt(year), parseInt(month) - 1);
+      this.currentMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
       if (this.onRefreshCallback) {
         this.onRefreshCallback();
       }
     });
 
     prevBtn?.addEventListener('click', () => {
-      this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);
+      this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
       monthInput.value = `${this.currentMonth.getFullYear()}-${String(this.currentMonth.getMonth() + 1).padStart(2, '0')}`;
       if (this.onRefreshCallback) {
         this.onRefreshCallback();
@@ -300,7 +300,7 @@ Por favor realiza el pago en el plazo indicado.
     });
 
     nextBtn?.addEventListener('click', () => {
-      this.currentMonth.setMonth(this.currentMonth.getMonth() + 1);
+      this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 1);
       monthInput.value = `${this.currentMonth.getFullYear()}-${String(this.currentMonth.getMonth() + 1).padStart(2, '0')}`;
       if (this.onRefreshCallback) {
         this.onRefreshCallback();
@@ -315,7 +315,10 @@ Por favor realiza el pago en el plazo indicado.
         generateBtn.disabled = true;
         generateBtn.innerHTML = '<span class="animate-spin">⏳</span> Generando...';
         
-        const generated = await MaintenanceInvoiceService.generateMonthlyInvoices();
+        const year = this.currentMonth.getFullYear();
+        const month = this.currentMonth.getMonth();
+        
+        const generated = await MaintenanceInvoiceService.generateMonthlyInvoices(year, month);
         
         if (generated.length > 0) {
           Toast.show(`✓ ${generated.length} factura(s) generada(s) correctamente`);

@@ -325,7 +325,7 @@ export class DocumentPDF {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text(`N° DE FACTURA: ${invoice.number || '0001'}`, pageWidth - 15, 28, { align: 'right' });
-    doc.text(`FECHA: ${formatDate(invoice.date || new Date())}`, pageWidth - 15, 33, { align: 'right' });
+    doc.text(`FECHA: ${formatDate(new Date(invoice.generatedDate))}`, pageWidth - 15, 33, { align: 'right' });
 
     // Datos Cliente
     doc.setDrawColor(...primaryColor);

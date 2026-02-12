@@ -304,7 +304,6 @@ export const MaintenanceAssignmentService = {
         description: assignmentData.description || '',
         amount: parseFloat(assignmentData.amount),
         frequency: assignmentData.frequency || 'monthly', // monthly, quarterly, annual
-        startDate: assignmentData.startDate,
         isActive: true,
         createdAt: new Date().toISOString()
       };
@@ -320,8 +319,12 @@ export const MaintenanceAssignmentService = {
   async update(id, assignmentData) {
     try {
       const docRef = doc(db, 'maintenanceAssignments', id);
+      // Filtrar campos undefined
+      const cleanData = Object.fromEntries(
+        Object.entries(assignmentData).filter(([_, value]) => value !== undefined)
+      );
       const updateData = {
-        ...assignmentData,
+        ...cleanData,
         updatedAt: new Date().toISOString()
       };
       await updateDoc(docRef, updateData);
@@ -460,23 +463,24 @@ export const MaintenanceInvoiceService = {
    * Genera automáticamente facturas para todas las asignaciones activas
    * de acuerdo a su frecuencia
    */
-  async generateMonthlyInvoices() {
+  async generateMonthlyInvoices(year = null, month = null) {
     try {
-      const assignments = await MaintenanceAssignmentService.getAll();
+      // Si no se especifica año/mes, usar la fecha actual
       const now = new Date();
+      const targetYear = year !== null ? year : now.getFullYear();
+      const targetMonth = month !== null ? month : now.getMonth();
+
+      const assignments = await MaintenanceAssignmentService.getAll();
       const generatedInvoices = [];
 
       for (const assignment of assignments) {
         if (!assignment.isActive) continue;
 
-        const startDate = new Date(assignment.startDate);
-        if (startDate > now) continue;
-
-        // Verificar si ya existe factura para este mes
+        // Verificar si ya existe factura para este mes y asignación
         const existingInvoices = await this.getByClientIdAndMonth(
           assignment.clientId,
-          now.getFullYear(),
-          now.getMonth()
+          targetYear,
+          targetMonth
         );
 
         // Filtrar por assignmentId para evitar duplicados
@@ -485,8 +489,11 @@ export const MaintenanceInvoiceService = {
         );
 
         if (!alreadyGenerated && assignment.frequency === 'monthly') {
-          // Crear factura
-          const dueDate = new Date(now);
+          // Crear factura con fecha del último día del mes seleccionado
+          // Usa el último día del mes (29 o 28 para febrero, 30 para otros, 31 para julio/ago/etc)
+          const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+          const invoiceDate = new Date(targetYear, targetMonth, lastDayOfMonth);
+          const dueDate = new Date(invoiceDate);
           dueDate.setDate(dueDate.getDate() + 15);
 
           await this.create({
@@ -497,6 +504,7 @@ export const MaintenanceInvoiceService = {
             assignmentId: assignment.id,
             serviceName: assignment.serviceName,
             amount: assignment.amount,
+            generatedDate: invoiceDate.toISOString(),
             dueDate: dueDate.toISOString()
           });
 
