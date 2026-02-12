@@ -53,9 +53,9 @@ export class Modal {
   static confirmDelete(message) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm';
+      overlay.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4';
       overlay.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in zoom-in">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
           <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2M6.343 3L3 6.343m0 11.314L6.343 21m11.314 0l3.343-3.343m0-11.314l-3.343-3.343"/>
